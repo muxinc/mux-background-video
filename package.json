@@ -1,0 +1,24 @@
+{
+  "name": "media-renderer",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --format=esm --outdir=dist",
+    "dev": "npm run watch & npm run serve",
+    "watch": "npm run build -- --watch=forever",
+    "serve": "wet serve . --livereload"
+  },
+  "keywords": [
+    "hls",
+    "video",
+    "engine"
+  ],
+  "author": "@muxinc",
+  "license": "MIT",
+  "devDependencies": {
+    "esbuild": "^0.25.6",
+    "typescript": "^5.8.3",
+    "wet-run": "^1.2.5"
+  }
+}

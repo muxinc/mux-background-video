@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HLS Mini</title>
+    <style>
+      video {
+        width: 100%;
+        max-width: 960px;
+        aspect-ratio: 16 / 9;
+      }
+    </style>
+    <script type="module">
+      import { MediaRenderer } from './dist/index.js';
+
+      const video = document.querySelector('#video');
+      const renderer = new MediaRenderer(video);
+      // renderer.src = 'https://stream.mux.com/Sc89iWAyNkhJ3P1rQ02nrEdCFTnfT01CZ2KmaEcxXfB008.m3u8';
+      renderer.src = 'https://stream.mux.com/crDG1Lz1004PuNKSqiw02PFumJlY7nx500v5M02RXdD36hg.m3u8';
+      // renderer.play();
+    </script>
+  </head>
+  <body>
+    <video id="video" controls muted></video>
+  </body>
+</html>
