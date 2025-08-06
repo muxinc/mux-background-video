@@ -1,6 +1,6 @@
 import { IMediaDisplay, IMediaEngine } from '../../types';
 import { HlsMiniState } from './types';
-import { loadMedia } from './playlists';
+import { loadMedia } from './mediasource';
 import { createStore } from './utils';
 
 export class HlsMini implements IMediaEngine {
@@ -13,7 +13,6 @@ export class HlsMini implements IMediaEngine {
       ['src', 'mediaDisplay'],
       async (_, { src, mediaDisplay }) => {
         if (mediaDisplay && src) {
-          console.log('loading media');
           await loadMedia(src, mediaDisplay);
         }
       }
@@ -26,11 +25,6 @@ export class HlsMini implements IMediaEngine {
 
   set src(src: string) {
     this.#store.put({ src });
-    this.load();
-  }
-
-  async load() {
-    console.log(this.#store.get());
   }
 
   attachMedia(mediaDisplay: IMediaDisplay) {

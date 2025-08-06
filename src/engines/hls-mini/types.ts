@@ -8,3 +8,17 @@ export type HlsMiniState = {
   audio?: any;
   video?: any;
 };
+
+export type Rendition = {
+  uri?: string;
+  mimeType: string;
+  codec?: string;
+  duration?: number;
+  groupId?: string;
+  audio?: string;
+};
+
+export type Segment = { 
+  duration: number; 
+  uri?: string;
+};

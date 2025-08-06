@@ -6,6 +6,5 @@ export interface IMediaDisplay extends PartialMediaInterface {
 
 export interface IMediaEngine {
   src: string;
-  load(): Promise<void>;
-  attachMedia(media: any): void;
+  attachMedia(media: IMediaDisplay): void;
 }
