@@ -58,7 +58,6 @@ const MultivariantPlaylistReducerTuples: ReducerTuple<MultivariantPlaylistModel>
         model.push({
           ...restProps,
           uri: uriToAbsoluteURI(segUri, baseURI),
-          duration: undefined,
           mimeType: 'audio/mp4',
           codec: undefined,
         });
@@ -68,7 +67,7 @@ const MultivariantPlaylistReducerTuples: ReducerTuple<MultivariantPlaylistModel>
     [
       '#EXT-X-STREAM-INF',
       (model, lineStr) => {
-        const { audio, codecs, ...restProps } = propsFromLineStr(lineStr);
+        const { audio, codecs, resolution, ...restProps } = propsFromLineStr(lineStr);
         model.push({
           ...restProps,
           audio,
@@ -76,6 +75,8 @@ const MultivariantPlaylistReducerTuples: ReducerTuple<MultivariantPlaylistModel>
           codec: codecs
             .split(',')
             .find((codec) => !codec.toLowerCase().startsWith('mp4a')),
+          width: +resolution.split('x')[0],
+          height: +resolution.split('x')[1],
         });
         const audioPlaylist = model.find(
           ({ groupId, mimeType }) =>
@@ -101,7 +102,7 @@ const MultivariantPlaylistReducerTuples: ReducerTuple<MultivariantPlaylistModel>
 
 // Takes a URI for a multivariant playlist and asynchronously yields a model of
 // the playlist with the URI
-export const getMultivariantPlaylistFromMediaPlaylistData = async (
+export const getMultivariantPlaylist = async (
   uri: string
 ) => {
   const playlists = await getPlaylistFromURI(
@@ -113,7 +114,7 @@ export const getMultivariantPlaylistFromMediaPlaylistData = async (
 
 // Takes a media playlist data model (typically derived from a multivariant playlist)
 // and asynchronously yields an updated model with the media playlist data.
-export const getMediaPlaylistFromMediaPlaylistData = async <
+export const getMediaPlaylist = async <
   T extends Rendition,
 >(
   mediaPlaylistData: T
@@ -121,11 +122,11 @@ export const getMediaPlaylistFromMediaPlaylistData = async <
   if (!mediaPlaylistData.uri) {
     throw new Error('Media playlist data must have a URI');
   }
-  const playlist = await getPlaylistFromURI(
+  const segments = await getPlaylistFromURI(
     mediaPlaylistData.uri,
     MediaPlaylistReducerTuples
   );
-  return { ...mediaPlaylistData, playlist };
+  return { ...mediaPlaylistData, segments };
 };
 
 // Given a URI for a particular playlist and a data structure that defines how to

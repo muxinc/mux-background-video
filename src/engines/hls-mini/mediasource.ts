@@ -1,7 +1,4 @@
-import {
-  getMultivariantPlaylistFromMediaPlaylistData,
-  getMediaPlaylistFromMediaPlaylistData,
-} from './playlists';
+import { getMultivariantPlaylist, getMediaPlaylist } from './playlists';
 import type { IMediaDisplay } from '../../types';
 import type { Rendition } from './types';
 
@@ -11,91 +8,171 @@ type EventDispatcher = Pick<EventTarget, 'addEventListener'>;
 type MinimalSourceBuffer = EventDispatcher & Pick<SourceBuffer, 'appendBuffer'>;
 type SourceBufferData = Parameters<MinimalSourceBuffer['appendBuffer']>[0];
 
+type LoadMediaOptions = {
+  maxResolution?: string;
+};
+
+const MIN_BUFFER_AHEAD = 5;
+
 export const loadMedia = async (
   uri: string,
-  mediaEl: IMediaDisplay
-): Promise<any> => {
-  const mediaPlaylistsData =
-    await getMultivariantPlaylistFromMediaPlaylistData(uri);
-  console.log(mediaPlaylistsData);
-  Promise.all([
-    getMediaSourceFromMediaPlaylistDataAndElement(
-      mediaPlaylistsData.playlists as Rendition[],
-      mediaEl
-    ),
-    Promise.all(
-      (mediaPlaylistsData.playlists as Rendition[]).map(
-        getMediaPlaylistFromMediaPlaylistData
-      )
-    ),
-  ]).then(async ([mediaSource, playlists]) => {
-    const selectedMediaPlaylists = playlists.filter(
-      ({ mimeType }: any, i: number, list: any[]) =>
-        list
-          .slice(0, i)
-          .every((prevPlaylist: any) => prevPlaylist.mimeType !== mimeType)
-    );
-    for (
-      let i = 0;
-      i < (selectedMediaPlaylists[0] as any).playlist.length;
-      i++
-    ) {
-      const segments = selectedMediaPlaylists.map(
-        ({ playlist }: any) => playlist[i]
-      );
-      const segmentResponses = await Promise.all(
-        segments.map(({ uri }: any) => fetch(uri))
-      );
-      const segmentDataList = await Promise.all(
-        segmentResponses.map((segmentResponse: Response) =>
-          segmentResponse.arrayBuffer()
-        )
-      );
-      await Promise.all(
-        segmentDataList.map((segmentData: ArrayBuffer, i: number) => {
-          const sourceBuffer = mediaSource.sourceBuffers[i];
-          return appendSegmentAsPromise(sourceBuffer, segmentData);
-        })
-      );
-    }
+  mediaEl: IMediaDisplay,
+  options: LoadMediaOptions = {}
+) => {
+  const { playlists } = await getMultivariantPlaylist(uri);
+  const selected = selectPlaylists(playlists, options);
+  const mediaPlaylists = await Promise.all(selected.map(getMediaPlaylist));
+  const mediaSource = await initMediaSource(mediaPlaylists, mediaEl);
+
+  Promise.all(mediaPlaylists.map((playlist, index) => {
+    const sourceBuffer = mediaSource.sourceBuffers[index];
+    return loadSegments(playlist, sourceBuffer, mediaEl);
+  })).then(() => {
     mediaSource.endOfStream();
-    return playlists;
+  });
+
+  console.log(mediaSource);
+  console.log(mediaPlaylists);
+
+  return mediaPlaylists;
+};
+
+const selectPlaylists = (
+  playlists: Rendition[],
+  { maxResolution }: LoadMediaOptions = {}
+) => {
+  const videoRenditions = playlists.filter((playlist) => !playlist.type);
+
+  const selectedVideo = maxResolution
+    ? videoRenditions
+        .filter(({ height }) => !height || height <= parseInt(maxResolution))
+        .sort((a, b) => (b.height || 0) - (a.height || 0))[0]
+    : videoRenditions[0];
+
+  const selectedAudio =
+    selectedVideo.audio &&
+    playlists
+      .filter(({ groupId }) => groupId === selectedVideo.audio)
+      .find((audio) => audio.default === 'YES');
+
+  return selectedAudio ? [selectedVideo, selectedAudio] : [selectedVideo];
+};
+
+const initMediaSource = async (
+  mediaPlaylists: Rendition[],
+  mediaEl: IMediaDisplay
+) => {
+  const mediaSource = new MediaSource();
+  mediaEl.src = URL.createObjectURL(mediaSource);
+  await eventToPromise(mediaSource, 'sourceopen');
+
+  const duration = getMediaDuration(mediaPlaylists);
+  if (duration > 0) mediaSource.duration = duration;
+
+  mediaPlaylists.forEach(({ mimeType, codec }) => {
+    try {
+      const sourceBuffer = mediaSource.addSourceBuffer(
+        `${mimeType}; codecs="${codec}"`
+      );
+      if (duration > 0) {
+        // Prevents a segment from being added beyond a certain time.
+        sourceBuffer.appendWindowEnd = duration;
+      }
+    } catch (error) {
+      console.error(
+        `Failed to add source buffer for ${mimeType} with codec ${codec}`
+      );
+      throw error;
+    }
+  });
+
+  return mediaSource;
+};
+
+const getMediaDuration = (mediaPlaylists: Rendition[]) => {
+  const [{ segments: vids = [] }, { segments: auds = [] }] = mediaPlaylists;
+
+  const videoDuration = vids.reduce((acc, { duration }) => acc + duration, 0);
+  const audioDuration = auds.reduce((acc, { duration }) => acc + duration, 0);
+
+  return Math.max(videoDuration, audioDuration);
+};
+
+const loadSegments = async (
+  playlist: Rendition,
+  sourceBuffer: SourceBuffer,
+  mediaEl: IMediaDisplay
+): Promise<void> => {
+  const { segments = [] } = playlist;
+  let segmentIndex = 0;
+  let isLoading = false;
+
+  const shouldLoadMoreSegments = () => {
+    const { currentTime } = mediaEl;
+    const { buffered } = sourceBuffer;
+    
+    if (buffered.length === 0) return true;
+    if (segmentIndex >= segments.length) return false;
+    
+    const bufferEnd = buffered.end(buffered.length - 1);
+    const bufferAhead = bufferEnd - currentTime;
+    
+    return bufferAhead < MIN_BUFFER_AHEAD;
+  };
+
+  const loadNextSegments = async () => {
+    if (isLoading || segmentIndex >= segments.length) return;
+    
+    isLoading = true;
+    
+    try {
+      // Load segments until we have sufficient buffer
+      while (segmentIndex < segments.length && shouldLoadMoreSegments()) {
+        const segment = segments[segmentIndex];
+        
+        if (sourceBuffer.updating) {
+          await eventToPromise(sourceBuffer, 'updateend');
+        }
+        
+        try {
+          const segmentData = await fetchSegment(segment.uri!);
+          await appendSegmentAsPromise(sourceBuffer, segmentData);
+          segmentIndex++;
+          
+          console.log(`Loaded segment ${segmentIndex}/${segments.length}`);
+        } catch (error) {
+          console.error(`Failed to load segment ${segmentIndex}:`, error);
+          // Continue with next segment instead of stopping completely
+          segmentIndex++;
+        }
+      }
+    } finally {
+      isLoading = false;
+    }
+  };
+
+  return new Promise(async (resolve) => {
+    await loadNextSegments();
+
+    const checkInterval = setInterval(async () => {
+      if (!isLoading && shouldLoadMoreSegments()) {
+        await loadNextSegments();
+      }
+      // Clear interval when all segments are loaded
+      if (segmentIndex >= segments.length) {
+        clearInterval(checkInterval);
+        resolve();
+      }
+    }, 500);
   });
 };
 
-const getMediaSourceFromMediaPlaylistDataAndElement = async (
-  playlists: Rendition[],
-  mediaEl: IMediaDisplay
-): Promise<MediaSource> => {
-  if (
-    !(
-      'MediaSource' in globalThis &&
-      playlists.every(({ mimeType, codec }: Rendition) =>
-        MediaSource.isTypeSupported(`${mimeType}; codecs="${codec}"`)
-      )
-    )
-  ) {
-    return Promise.reject();
+const fetchSegment = async (uri: string) => {
+  const response = await fetch(uri);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch segment: ${response.status}`);
   }
-
-  const mediaSource = new MediaSource();
-  mediaEl.src = URL.createObjectURL(mediaSource);
-  return eventToPromise(mediaSource, 'sourceopen').then(() => {
-    // NOTE: This is a hacky POC version of "selected playlists" for demo purposes only (CJP)
-    const selectedMediaPlaylists = playlists.filter(
-      ({ mimeType }: Rendition, i: number, list: Rendition[]) =>
-        list
-          .slice(0, i)
-          .every(
-            (prevPlaylist: Rendition) => prevPlaylist.mimeType !== mimeType
-          )
-    );
-    console.log(selectedMediaPlaylists);
-    selectedMediaPlaylists.forEach(({ mimeType, codec }: Rendition) =>
-      mediaSource.addSourceBuffer(`${mimeType}; codecs="${codec}"`)
-    );
-    return mediaSource;
-  });
+  return response.arrayBuffer();
 };
 
 const appendSegmentAsPromise = async (

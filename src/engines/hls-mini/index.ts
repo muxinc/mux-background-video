@@ -13,7 +13,9 @@ export class HlsMini implements IMediaEngine {
       ['src', 'mediaDisplay'],
       async (_, { src, mediaDisplay }) => {
         if (mediaDisplay && src) {
-          await loadMedia(src, mediaDisplay);
+          await loadMedia(src, mediaDisplay, {
+            maxResolution: '270p',
+          });
         }
       }
     );
