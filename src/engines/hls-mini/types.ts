@@ -33,4 +33,6 @@ export type Rendition = AudioRendition & VideoRendition;
 export type Segment = { 
   duration: number; 
   uri?: string;
+  start?: number;
+  end?: number;
 };

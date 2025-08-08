@@ -1,6 +1,6 @@
 import { getMultivariantPlaylist, getMediaPlaylist } from './playlists';
 import type { IMediaDisplay } from '../../types';
-import type { Rendition } from './types';
+import type { Rendition, Segment } from './types';
 
 // Takes an event dispatcher and event type yields
 // a promise that resolves to the event dispatched.
@@ -12,7 +12,9 @@ type LoadMediaOptions = {
   maxResolution?: string;
 };
 
-const MIN_BUFFER_AHEAD = 5;
+const MIN_BUFFER_AHEAD = 5; // seconds: minimum buffer ahead to keep
+const BACK_BUFFER_TARGET = 20; // seconds of back buffer to keep when evicting
+const GAP_TOLERANCE = 0.25; // seconds: treat tiny gaps between ranges as contiguous
 
 export const loadMedia = async (
   uri: string,
@@ -23,16 +25,12 @@ export const loadMedia = async (
   const selected = selectPlaylists(playlists, options);
   const mediaPlaylists = await Promise.all(selected.map(getMediaPlaylist));
   const mediaSource = await initMediaSource(mediaPlaylists, mediaEl);
+  const loadSegments = createLoadSegments(mediaPlaylists, mediaSource, mediaEl);
 
-  Promise.all(mediaPlaylists.map((playlist, index) => {
-    const sourceBuffer = mediaSource.sourceBuffers[index];
-    return loadSegments(playlist, sourceBuffer, mediaEl);
-  })).then(() => {
-    mediaSource.endOfStream();
-  });
+  loadSegments();
 
-  console.log(mediaSource);
-  console.log(mediaPlaylists);
+  // timeupdate events are unreliable, use an interval instead
+  const checkInterval = setInterval(loadSegments, 500);
 
   return mediaPlaylists;
 };
@@ -98,73 +96,178 @@ const getMediaDuration = (mediaPlaylists: Rendition[]) => {
   return Math.max(videoDuration, audioDuration);
 };
 
-const loadSegments = async (
-  playlist: Rendition,
-  sourceBuffer: SourceBuffer,
+const createLoadSegments = (
+  mediaPlaylists: Rendition[],
+  mediaSource: MediaSource,
   mediaEl: IMediaDisplay
-): Promise<void> => {
-  const { segments = [] } = playlist;
-  let segmentIndex = 0;
+) => {
   let isLoading = false;
-
-  const shouldLoadMoreSegments = () => {
-    const { currentTime } = mediaEl;
-    const { buffered } = sourceBuffer;
-    
-    if (buffered.length === 0) return true;
-    if (segmentIndex >= segments.length) return false;
-    
-    const bufferEnd = buffered.end(buffered.length - 1);
-    const bufferAhead = bufferEnd - currentTime;
-    
-    return bufferAhead < MIN_BUFFER_AHEAD;
-  };
+  let isEnded = false;
+  const mediaDuration = getMediaDuration(mediaPlaylists);
 
   const loadNextSegments = async () => {
-    if (isLoading || segmentIndex >= segments.length) return;
-    
+    if (isLoading) return;
     isLoading = true;
-    
-    try {
-      // Load segments until we have sufficient buffer
-      while (segmentIndex < segments.length && shouldLoadMoreSegments()) {
-        const segment = segments[segmentIndex];
-        
-        if (sourceBuffer.updating) {
-          await eventToPromise(sourceBuffer, 'updateend');
+
+    for (const [index, playlist] of mediaPlaylists.entries()) {
+      const sourceBuffer = mediaSource.sourceBuffers[index];
+      const segments = playlist.segments;
+
+      try {
+        const segmentsToLoad = getSegmentsToLoad(
+          segments,
+          sourceBuffer.buffered,
+          mediaEl.currentTime
+        );
+
+        if (segmentsToLoad.length > 0) {
+          console.log(JSON.stringify(segmentsToLoad, null, 2));
         }
-        
-        try {
-          const segmentData = await fetchSegment(segment.uri!);
-          await appendSegmentAsPromise(sourceBuffer, segmentData);
-          segmentIndex++;
-          
-          console.log(`Loaded segment ${segmentIndex}/${segments.length}`);
-        } catch (error) {
-          console.error(`Failed to load segment ${segmentIndex}:`, error);
-          // Continue with next segment instead of stopping completely
-          segmentIndex++;
+
+        for (const segment of segmentsToLoad) {
+          if (sourceBuffer.updating) {
+            await eventToPromise(sourceBuffer, 'updateend');
+          }
+
+          try {
+            const segmentData = await fetchSegment(segment.uri!);
+            try {
+              await appendSegment(sourceBuffer, segmentData);
+            } catch (error: any) {
+              if (error?.name === 'QuotaExceededError') {
+                await evictBuffer(sourceBuffer, mediaEl.currentTime);
+                // Retry once after eviction
+                await appendSegment(sourceBuffer, segmentData);
+              } else {
+                throw error;
+              }
+            }
+          } catch (error) {
+            console.error(`Failed to load segment ${segment.uri}:`, error);
+          }
         }
+      } finally {
+        isLoading = false;
       }
-    } finally {
-      isLoading = false;
+    }
+
+    // If VOD duration is known and both/all SourceBuffers are buffered to end,
+    // close the stream once.
+    if (
+      !isEnded &&
+      mediaDuration > 0 &&
+      mediaSource.readyState === 'open' &&
+      areAllSourceBuffersAtEnd(mediaSource, mediaDuration)
+    ) {
+      try {
+        mediaSource.endOfStream();
+      } catch (err) {
+        // Ignore if already ended/closed
+      }
+      isEnded = true;
     }
   };
 
-  return new Promise(async (resolve) => {
-    await loadNextSegments();
+  return loadNextSegments;
+};
 
-    const checkInterval = setInterval(async () => {
-      if (!isLoading && shouldLoadMoreSegments()) {
-        await loadNextSegments();
+// Decide which segments to load next to ensure at least MIN_BUFFER_AHEAD seconds
+// are available ahead of the current playback position.
+const getSegmentsToLoad = (
+  segments: Segment[] = [],
+  buffered: TimeRanges,
+  currentTime: number
+): Segment[] => {
+  const toLoad: Segment[] = [];
+  const addedUris = new Set<string>();
+
+  // If nothing buffered yet and there is an init segment (duration 0), enqueue it first
+  if (buffered.length === 0) {
+    const initSeg = segments.find((s) => (s.duration || 0) === 0 && !!s.uri);
+    if (initSeg && initSeg.uri && !addedUris.has(initSeg.uri)) {
+      toLoad.push(initSeg);
+      addedUris.add(initSeg.uri);
+    }
+  }
+
+  const bufferedEnd = getContiguousBufferedEnd(buffered, currentTime);
+  // Cap future buffering to MIN_BUFFER_AHEAD ahead of the currentTime
+  const targetBufferedEnd = currentTime + MIN_BUFFER_AHEAD;
+
+  // If we already have at least MIN_BUFFER_AHEAD seconds buffered contiguously ahead,
+  // do not schedule any more segments.
+  if (bufferedEnd >= targetBufferedEnd) {
+    return toLoad;
+  }
+
+  // Find the first segment that extends beyond the current buffered end
+  let startIndex = segments.findIndex((s) => (s.end || 0) > bufferedEnd);
+  if (startIndex < 0) return toLoad; // Nothing more to load
+
+  // Add segments until we reach the targetBufferedEnd, skipping fully buffered ones
+  for (let i = startIndex; i < segments.length; i += 1) {
+    const seg = segments[i];
+    const segStart = seg.start ?? 0;
+    const segEnd = seg.end ?? segStart + (seg.duration || 0);
+
+    if (segEnd <= bufferedEnd) continue; // already behind our starting point
+    if (isRangeFullyBuffered(segStart, segEnd, buffered)) continue;
+
+    if (seg.uri && !addedUris.has(seg.uri)) {
+      toLoad.push(seg);
+      addedUris.add(seg.uri);
+    }
+
+    if (segEnd >= targetBufferedEnd) break;
+  }
+
+  return toLoad;
+};
+
+// Helper: end of the buffered range chain that contains currentTime, merging small gaps
+const getContiguousBufferedEnd = (ranges: TimeRanges, time: number) => {
+  if (ranges.length === 0) return time;
+
+  for (let i = 0; i < ranges.length; i += 1) {
+    const rangeStart = ranges.start(i);
+    const rangeEnd = ranges.end(i);
+
+    // Consider small gaps around the current time as contiguous
+    if (rangeStart - GAP_TOLERANCE <= time && time < rangeEnd + GAP_TOLERANCE) {
+      let contiguousEnd = rangeEnd;
+
+      // Merge forward while gaps are within tolerance
+      for (let j = i + 1; j < ranges.length; j += 1) {
+        const nextStart = ranges.start(j);
+        const nextEnd = ranges.end(j);
+        if (nextStart - contiguousEnd <= GAP_TOLERANCE) {
+          contiguousEnd = Math.max(contiguousEnd, nextEnd);
+        } else {
+          break;
+        }
       }
-      // Clear interval when all segments are loaded
-      if (segmentIndex >= segments.length) {
-        clearInterval(checkInterval);
-        resolve();
-      }
-    }, 500);
-  });
+
+      return contiguousEnd;
+    }
+  }
+
+  return time;
+};
+
+// Helper: is [start, end] fully within any buffered range?
+const isRangeFullyBuffered = (
+  start: number | undefined,
+  end: number | undefined,
+  ranges: TimeRanges
+) => {
+  if (start == null || end == null) return false;
+  for (let i = 0; i < ranges.length; i += 1) {
+    const rStart = ranges.start(i);
+    const rEnd = ranges.end(i);
+    if (rStart <= start + GAP_TOLERANCE && end - GAP_TOLERANCE <= rEnd)
+      return true;
+  }
+  return false;
 };
 
 const fetchSegment = async (uri: string) => {
@@ -175,13 +278,36 @@ const fetchSegment = async (uri: string) => {
   return response.arrayBuffer();
 };
 
-const appendSegmentAsPromise = async (
+const appendSegment = async (
   sourceBuffer: MinimalSourceBuffer,
   segmentData: SourceBufferData
 ) => {
   const promise = eventToPromise(sourceBuffer, 'updateend');
   sourceBuffer.appendBuffer(segmentData);
   return promise;
+};
+
+const evictBuffer = async (sourceBuffer: SourceBuffer, currentTime: number) => {
+  try {
+    if (sourceBuffer.updating) {
+      await eventToPromise(sourceBuffer, 'updateend');
+    }
+
+    const buffered = sourceBuffer.buffered;
+    if (buffered.length === 0) return;
+
+    const safeKeepTime = Math.max(0, currentTime - BACK_BUFFER_TARGET);
+    const removeStart = buffered.start(0);
+    const removeEnd = Math.min(safeKeepTime, buffered.end(buffered.length - 1));
+
+    if (removeEnd > removeStart) {
+      const removePromise = eventToPromise(sourceBuffer, 'updateend');
+      sourceBuffer.remove(removeStart, removeEnd);
+      await removePromise;
+    }
+  } catch (error) {
+    console.warn('Buffer eviction failed:', error);
+  }
 };
 
 export const eventToPromise = async (
@@ -191,4 +317,33 @@ export const eventToPromise = async (
   return new Promise((resolve) => {
     eventDispatcher.addEventListener(type, resolve, { once: true });
   });
+};
+
+// Determine whether all SourceBuffers have buffered content to (approximately) the
+// media duration end. Uses a small tolerance to account for floating point rounding
+// and muxing boundary differences.
+const areAllSourceBuffersAtEnd = (
+  mediaSource: MediaSource,
+  duration: number
+) => {
+  const tolerance = GAP_TOLERANCE;
+  const { sourceBuffers } = mediaSource;
+  if (sourceBuffers.length === 0) return false;
+
+  for (let i = 0; i < sourceBuffers.length; i += 1) {
+    const sb = sourceBuffers[i];
+    const ranges = sb.buffered;
+    if (ranges.length === 0) return false;
+
+    // Find the maximum end among all ranges
+    let maxEnd = 0;
+    for (let r = 0; r < ranges.length; r += 1) {
+      const end = ranges.end(r);
+      if (end > maxEnd) maxEnd = end;
+    }
+
+    if (maxEnd < duration - tolerance) return false;
+  }
+
+  return true;
 };
