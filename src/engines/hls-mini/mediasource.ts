@@ -102,8 +102,6 @@ const createLoadSegments = (
   mediaEl: IMediaDisplay
 ) => {
   let isLoading = false;
-  let isEnded = false;
-  const mediaDuration = getMediaDuration(mediaPlaylists);
 
   const loadNextSegments = async () => {
     if (isLoading) return;
@@ -151,24 +149,26 @@ const createLoadSegments = (
       }
     }
 
-    // If VOD duration is known and both/all SourceBuffers are buffered to end,
-    // close the stream once.
-    if (
-      !isEnded &&
-      mediaDuration > 0 &&
-      mediaSource.readyState === 'open' &&
-      areAllSourceBuffersAtEnd(mediaSource, mediaDuration)
-    ) {
-      try {
-        mediaSource.endOfStream();
-      } catch (err) {
-        // Ignore if already ended/closed
-      }
-      isEnded = true;
-    }
+    // Every time we load segments, check if we can end the stream.
+    // It's possible endOfStream needs to be called more than once.
+    checkEndOfStream(mediaSource, getMediaDuration(mediaPlaylists));
   };
 
   return loadNextSegments;
+};
+
+const checkEndOfStream = (mediaSource: MediaSource, mediaDuration: number) => {
+  if (
+    mediaDuration > 0 &&
+    mediaSource.readyState === 'open' &&
+    areFinalSegmentsBuffered(mediaSource, mediaDuration)
+  ) {
+    try {
+      mediaSource.endOfStream();
+    } catch (err) {
+      // Ignore if already ended/closed
+    }
+  }
 };
 
 // Decide which segments to load next to ensure at least MIN_BUFFER_AHEAD seconds
@@ -211,7 +211,7 @@ const getSegmentsToLoad = (
     const segEnd = seg.end ?? segStart + (seg.duration || 0);
 
     if (segEnd <= bufferedEnd) continue; // already behind our starting point
-    if (isRangeFullyBuffered(segStart, segEnd, buffered)) continue;
+    if (isRangeInBuffered(segStart, segEnd, buffered)) continue;
 
     if (seg.uri && !addedUris.has(seg.uri)) {
       toLoad.push(seg);
@@ -255,18 +255,21 @@ const getContiguousBufferedEnd = (ranges: TimeRanges, time: number) => {
 };
 
 // Helper: is [start, end] fully within any buffered range?
-const isRangeFullyBuffered = (
+const isRangeInBuffered = (
   start: number | undefined,
   end: number | undefined,
   ranges: TimeRanges
 ) => {
   if (start == null || end == null) return false;
-  for (let i = 0; i < ranges.length; i += 1) {
+
+  for (let i = 0; i < ranges.length; i++) {
     const rStart = ranges.start(i);
     const rEnd = ranges.end(i);
+
     if (rStart <= start + GAP_TOLERANCE && end - GAP_TOLERANCE <= rEnd)
       return true;
   }
+
   return false;
 };
 
@@ -319,31 +322,11 @@ export const eventToPromise = async (
   });
 };
 
-// Determine whether all SourceBuffers have buffered content to (approximately) the
-// media duration end. Uses a small tolerance to account for floating point rounding
-// and muxing boundary differences.
-const areAllSourceBuffersAtEnd = (
+const areFinalSegmentsBuffered = (
   mediaSource: MediaSource,
   duration: number
 ) => {
-  const tolerance = GAP_TOLERANCE;
-  const { sourceBuffers } = mediaSource;
-  if (sourceBuffers.length === 0) return false;
-
-  for (let i = 0; i < sourceBuffers.length; i += 1) {
-    const sb = sourceBuffers[i];
-    const ranges = sb.buffered;
-    if (ranges.length === 0) return false;
-
-    // Find the maximum end among all ranges
-    let maxEnd = 0;
-    for (let r = 0; r < ranges.length; r += 1) {
-      const end = ranges.end(r);
-      if (end > maxEnd) maxEnd = end;
-    }
-
-    if (maxEnd < duration - tolerance) return false;
-  }
-
-  return true;
+  return Array.from(mediaSource.sourceBuffers).every((sb) =>
+    isRangeInBuffered(duration, duration, sb.buffered)
+  );
 };
