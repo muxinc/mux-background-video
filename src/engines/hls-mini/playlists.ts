@@ -103,11 +103,11 @@ const MultivariantPlaylistReducerTuples: ReducerTuple<MultivariantPlaylistModel>
 // Takes a URI for a multivariant playlist and asynchronously yields a model of
 // the playlist with the URI
 export const getMultivariantPlaylist = async (uri: string) => {
-  const playlists = await getPlaylistFromURI(
+  const renditions = await getPlaylistFromURI(
     uri,
     MultivariantPlaylistReducerTuples
   );
-  return { uri, playlists };
+  return { uri, renditions };
 };
 
 // Takes a media playlist data model (typically derived from a multivariant playlist)

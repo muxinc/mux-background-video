@@ -21,25 +21,19 @@ export const loadMedia = async (
   mediaEl: IMediaDisplay,
   options: LoadMediaOptions = {}
 ) => {
-  const { playlists } = await getMultivariantPlaylist(uri);
-  const selected = selectPlaylists(playlists, options);
+  const { renditions } = await getMultivariantPlaylist(uri);
+  const selected = selectRenditions(renditions, options);
   const mediaPlaylists = await Promise.all(selected.map(getMediaPlaylist));
   const mediaSource = await initMediaSource(mediaPlaylists, mediaEl);
-  const loadSegments = createLoadSegments(mediaPlaylists, mediaSource, mediaEl);
-
-  loadSegments();
-
-  // timeupdate events are unreliable, use an interval instead
-  const checkInterval = setInterval(loadSegments, 500);
-
+  initLoadSegments(mediaPlaylists, mediaSource, mediaEl);
   return mediaPlaylists;
 };
 
-const selectPlaylists = (
-  playlists: Rendition[],
+const selectRenditions = (
+  renditions: Rendition[],
   { maxResolution }: LoadMediaOptions = {}
 ) => {
-  const videoRenditions = playlists.filter((playlist) => !playlist.type);
+  const videoRenditions = renditions.filter((rendition) => !rendition.type);
 
   const selectedVideo = maxResolution
     ? videoRenditions
@@ -49,7 +43,7 @@ const selectPlaylists = (
 
   const selectedAudio =
     selectedVideo.audio &&
-    playlists
+    renditions
       .filter(({ groupId }) => groupId === selectedVideo.audio)
       .find((audio) => audio.default === 'YES');
 
@@ -96,7 +90,7 @@ const getMediaDuration = (mediaPlaylists: Rendition[]) => {
   return Math.max(videoDuration, audioDuration);
 };
 
-const createLoadSegments = (
+const initLoadSegments = (
   mediaPlaylists: Rendition[],
   mediaSource: MediaSource,
   mediaEl: IMediaDisplay
@@ -154,7 +148,10 @@ const createLoadSegments = (
     checkEndOfStream(mediaSource, getMediaDuration(mediaPlaylists));
   };
 
-  return loadNextSegments;
+  loadNextSegments();
+
+  // timeupdate events are unreliable, use an interval instead
+  const checkInterval = setInterval(loadNextSegments, 500);
 };
 
 const checkEndOfStream = (mediaSource: MediaSource, mediaDuration: number) => {
@@ -191,11 +188,8 @@ const getSegmentsToLoad = (
   }
 
   const bufferedEnd = getContiguousBufferedEnd(buffered, currentTime);
-  // Cap future buffering to MIN_BUFFER_AHEAD ahead of the currentTime
   const targetBufferedEnd = currentTime + MIN_BUFFER_AHEAD;
 
-  // If we already have at least MIN_BUFFER_AHEAD seconds buffered contiguously ahead,
-  // do not schedule any more segments.
   if (bufferedEnd >= targetBufferedEnd) {
     return toLoad;
   }

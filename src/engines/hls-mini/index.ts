@@ -13,9 +13,10 @@ export class HlsMini implements IMediaEngine {
       ['src', 'mediaDisplay'],
       async (_, { src, mediaDisplay }) => {
         if (mediaDisplay && src) {
-          await loadMedia(src, mediaDisplay, {
+          const playlists = await loadMedia(src, mediaDisplay, {
             maxResolution: '270p',
           });
+          console.log(JSON.stringify(playlists, null, 2));
         }
       }
     );
