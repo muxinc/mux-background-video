@@ -5,8 +5,7 @@ import type { Rendition, Segment } from './types';
 // Takes an event dispatcher and event type yields
 // a promise that resolves to the event dispatched.
 type EventDispatcher = Pick<EventTarget, 'addEventListener'>;
-type MinimalSourceBuffer = EventDispatcher & Pick<SourceBuffer, 'appendBuffer'>;
-type SourceBufferData = Parameters<MinimalSourceBuffer['appendBuffer']>[0];
+type SourceBufferData = Parameters<SourceBuffer['appendBuffer']>[0];
 
 type LoadMediaOptions = {
   maxResolution?: string;
@@ -21,6 +20,11 @@ export const loadMedia = async (
   mediaEl: IMediaDisplay,
   options: LoadMediaOptions = {}
 ) => {
+  if (mediaEl.src) {
+    mediaEl.src = '';
+    mediaEl.load();
+  }
+
   const { renditions } = await getMultivariantPlaylist(uri);
   const selected = selectRenditions(renditions, options);
   const mediaPlaylists = await Promise.all(selected.map(getMediaPlaylist));
@@ -61,10 +65,14 @@ const initMediaSource = async (
   const duration = getMediaDuration(mediaPlaylists);
   if (duration > 0) mediaSource.duration = duration;
 
-  mediaPlaylists.forEach(({ mimeType, codec }) => {
+  const isMuxed = mediaPlaylists.length === 1;
+
+  mediaPlaylists.forEach(({ mimeType, codec, codecs }) => {
+    const codecStr = isMuxed ? codecs : codec;
+
     try {
       const sourceBuffer = mediaSource.addSourceBuffer(
-        `${mimeType}; codecs="${codec}"`
+        `${mimeType}; codecs="${codecStr}"`
       );
       if (duration > 0) {
         // Prevents a segment from being added beyond a certain time.
@@ -82,7 +90,8 @@ const initMediaSource = async (
 };
 
 const getMediaDuration = (mediaPlaylists: Rendition[]) => {
-  const [{ segments: vids = [] }, { segments: auds = [] }] = mediaPlaylists;
+  const [{ segments: vids = [] }, { segments: auds = [] } = {}] =
+    mediaPlaylists;
 
   const videoDuration = vids.reduce((acc, { duration }) => acc + duration, 0);
   const audioDuration = auds.reduce((acc, { duration }) => acc + duration, 0);
@@ -101,46 +110,48 @@ const initLoadSegments = (
     if (isLoading) return;
     isLoading = true;
 
-    for (const [index, playlist] of mediaPlaylists.entries()) {
-      const sourceBuffer = mediaSource.sourceBuffers[index];
-      const segments = playlist.segments;
+    try {
+      await Promise.all(
+        mediaPlaylists.map(async (playlist, index) => {
+          const sourceBuffer = mediaSource.sourceBuffers[index];
+          const segments = playlist.segments;
 
-      try {
-        const segmentsToLoad = getSegmentsToLoad(
-          segments,
-          sourceBuffer.buffered,
-          mediaEl.currentTime
-        );
+          const segmentsToLoad = getSegmentsToLoad(
+            segments,
+            sourceBuffer.buffered,
+            mediaEl.currentTime
+          );
 
-        if (segmentsToLoad.length > 0) {
-          console.log(JSON.stringify(segmentsToLoad, null, 2));
-        }
-
-        for (const segment of segmentsToLoad) {
-          if (sourceBuffer.updating) {
-            await eventToPromise(sourceBuffer, 'updateend');
-          }
-
-          try {
-            const segmentData = await fetchSegment(segment.uri!);
+          for (const segment of segmentsToLoad) {
+            const segUrl = new URL(segment.uri!);
             try {
-              await appendSegment(sourceBuffer, segmentData);
-            } catch (error: any) {
-              if (error?.name === 'QuotaExceededError') {
-                await evictBuffer(sourceBuffer, mediaEl.currentTime);
-                // Retry once after eviction
+              console.log(
+                `${index ? 'audio' : 'video'}`,
+                `${segment.start} -> ${segment.end}`,
+                segUrl.hostname,
+                segUrl.pathname
+              );
+              const segmentData = await fetchSegment(segment.uri!);
+              try {
                 await appendSegment(sourceBuffer, segmentData);
-              } else {
-                throw error;
+              } catch (error: any) {
+                if (error?.name === 'QuotaExceededError') {
+                  console.log('QuotaExceededError', mediaEl.currentTime);
+                  await evictBuffer(sourceBuffer, mediaEl.currentTime);
+                  // Retry once after eviction
+                  await appendSegment(sourceBuffer, segmentData);
+                } else {
+                  throw error;
+                }
               }
+            } catch (error) {
+              console.error(`Failed to load segment ${segment.uri}:`, error);
             }
-          } catch (error) {
-            console.error(`Failed to load segment ${segment.uri}:`, error);
           }
-        }
-      } finally {
-        isLoading = false;
-      }
+        })
+      );
+    } finally {
+      isLoading = false;
     }
 
     // Every time we load segments, check if we can end the stream.
@@ -150,8 +161,18 @@ const initLoadSegments = (
 
   loadNextSegments();
 
-  // timeupdate events are unreliable, use an interval instead
+  // timeupdate events are unreliable, also use an interval
   const checkInterval = setInterval(loadNextSegments, 500);
+
+  mediaEl.addEventListener('timeupdate', loadNextSegments);
+  mediaEl.addEventListener(
+    'emptied',
+    () => {
+      mediaEl.removeEventListener('timeupdate', loadNextSegments);
+      clearInterval(checkInterval);
+    },
+    { once: true }
+  );
 };
 
 const checkEndOfStream = (mediaSource: MediaSource, mediaDuration: number) => {
@@ -276,9 +297,11 @@ const fetchSegment = async (uri: string) => {
 };
 
 const appendSegment = async (
-  sourceBuffer: MinimalSourceBuffer,
+  sourceBuffer: SourceBuffer,
   segmentData: SourceBufferData
 ) => {
+  if (sourceBuffer.updating) await eventToPromise(sourceBuffer, 'updateend');
+
   const promise = eventToPromise(sourceBuffer, 'updateend');
   sourceBuffer.appendBuffer(segmentData);
   return promise;

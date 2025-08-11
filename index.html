@@ -3,26 +3,227 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>HLS Mini</title>
+    <title>Media Renderer Demo</title>
     <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 2rem 1rem;
+      }
+
+      .container {
+        max-width: 1200px;
+        width: 100%;
+        text-align: center;
+      }
+
+      h1 {
+        color: white;
+        margin-bottom: 2rem;
+        font-size: 2.5rem;
+        font-weight: 300;
+      }
+
+      .source-controls {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .input-group {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .input-group label {
+        font-weight: 600;
+        color: #333;
+        min-width: 80px;
+      }
+
+      .input-group input[type="url"] {
+        flex: 1;
+        min-width: 300px;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e1e5e9;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: border-color 0.2s ease;
+      }
+
+      .input-group input[type="url"]:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      }
+
+      .btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        white-space: nowrap;
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      }
+
+      .btn:active {
+        transform: translateY(0);
+      }
+
+      .video-container {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        display: flex;
+        justify-content: center;
+      }
+
       video {
         width: 100%;
         max-width: 960px;
         aspect-ratio: 16 / 9;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      }
+
+      .status {
+        margin-top: 1rem;
+        padding: 0.75rem;
+        border-radius: 8px;
+        font-weight: 500;
+        background: rgba(102, 126, 234, 0.1);
+        color: #667eea;
+        border: 1px solid rgba(102, 126, 234, 0.2);
+      }
+
+      @media (max-width: 768px) {
+        h1 {
+          font-size: 2rem;
+        }
+        
+        .source-controls {
+          padding: 1.5rem;
+        }
+        
+        .input-group {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        
+        .input-group input[type="url"] {
+          min-width: auto;
+        }
+        
+        .video-container {
+          padding: 1rem;
+        }
       }
     </style>
     <script type="module">
       import { MediaRenderer } from './dist/index.js';
 
       const video = document.querySelector('#video');
-      // video.currentTime = 19;
-      const renderer = new MediaRenderer(video);
-      // renderer.src = 'https://stream.mux.com/Sc89iWAyNkhJ3P1rQ02nrEdCFTnfT01CZ2KmaEcxXfB008.m3u8';
-      renderer.src = 'https://stream.mux.com/crDG1Lz1004PuNKSqiw02PFumJlY7nx500v5M02RXdD36hg.m3u8';
-      // renderer.play();
+      const sourceInput = document.querySelector('#sourceInput');
+      const loadBtn = document.querySelector('#loadBtn');
+      const status = document.querySelector('#status');
+      
+      let renderer = new MediaRenderer(video);
+      
+      // Set initial source
+      const initialSource = 'https://stream.mux.com/crDG1Lz1004PuNKSqiw02PFumJlY7nx500v5M02RXdD36hg.m3u8';
+      //const initialSource = 'https://stream.mux.com/XmScTfBovGOFDzH024025XpMGMWnaJEIHQS2hI98tpS00Y.m3u8';
+      sourceInput.value = initialSource;
+      renderer.src = initialSource;
+      
+      // const playbackRate = 3;
+      // video.playbackRate = playbackRate;
+      // video.defaultPlaybackRate = playbackRate;
+      
+      function updateStatus(message) {
+        status.textContent = message;
+        status.style.display = 'block';
+        setTimeout(() => {
+          status.style.display = 'none';
+        }, 3000);
+      }
+      
+      function loadNewSource() {
+        const newSource = sourceInput.value.trim();
+        if (!newSource) {
+          updateStatus('Please enter a valid URL');
+          return;
+        }
+        
+        try {
+          renderer.src = newSource;
+          updateStatus('Source updated successfully!');
+        } catch (error) {
+          updateStatus('Error updating source: ' + error.message);
+        }
+      }
+      
+      loadBtn.addEventListener('click', loadNewSource);
+      sourceInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          loadNewSource();
+        }
+      });
+      
+      // Initial status
+      updateStatus('Ready to play! Click the video controls to start.');
     </script>
   </head>
   <body>
-    <video id="video" controls loop></video>
+    <div class="container">
+      <h1>Media Renderer Demo</h1>
+      
+      <div class="source-controls">
+        <div class="input-group">
+          <label for="sourceInput">Source URL:</label>
+          <input 
+            type="url" 
+            id="sourceInput" 
+            placeholder="Enter HLS stream URL..."
+            autocomplete="off"
+          >
+          <button id="loadBtn" class="btn">Load Source</button>
+        </div>
+        <div class="status" id="status" style="display: none;"></div>
+      </div>
+      
+      <div class="video-container">
+        <video id="video" controls loop></video>
+      </div>
+    </div>
   </body>
 </html>

@@ -55,6 +55,7 @@ const MultivariantPlaylistReducerTuples: ReducerTuple<MultivariantPlaylistModel>
       '#EXT-X-MEDIA',
       (model, lineStr, { baseURI }) => {
         const { uri: segUri, ...restProps } = propsFromLineStr(lineStr);
+        if (!segUri) return model;
         model.push({
           ...restProps,
           uri: uriToAbsoluteURI(segUri, baseURI),
@@ -73,6 +74,7 @@ const MultivariantPlaylistReducerTuples: ReducerTuple<MultivariantPlaylistModel>
           ...restProps,
           audio,
           mimeType: 'video/mp4',
+          codecs,
           codec: codecs
             .split(',')
             .find((codec) => !codec.toLowerCase().startsWith('mp4a')),

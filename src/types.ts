@@ -5,7 +5,9 @@ type PartialMediaInterface = Pick<
 
 export interface IMediaDisplay extends PartialMediaInterface {
   src: string;
-  addEventListener: (type: string, listener: EventListener) => void;
+  load: () => void;
+  addEventListener: (type: string, listener: EventListener, options?: boolean | AddEventListenerOptions) => void;
+  removeEventListener: (type: string, listener: EventListener, options?: boolean | EventListenerOptions) => void;
 }
 
 export interface IMediaEngine {

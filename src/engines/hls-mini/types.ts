@@ -13,6 +13,7 @@ type BaseRendition = {
   uri?: string;
   mimeType: string;
   codec?: string;
+  codecs?: string;
   segments?: Segment[];
 };
 
