@@ -133,13 +133,13 @@ const initLoadSegments = (
               );
               const segmentData = await fetchSegment(segment.uri!);
               try {
-                await appendSegment(sourceBuffer, segmentData);
+                await appendSegment(mediaSource, sourceBuffer, segmentData);
               } catch (error: any) {
                 if (error?.name === 'QuotaExceededError') {
                   console.log('QuotaExceededError', mediaEl.currentTime);
                   await evictBuffer(sourceBuffer, mediaEl.currentTime);
                   // Retry once after eviction
-                  await appendSegment(sourceBuffer, segmentData);
+                  await appendSegment(mediaSource, sourceBuffer, segmentData);
                 } else {
                   throw error;
                 }
@@ -297,10 +297,15 @@ const fetchSegment = async (uri: string) => {
 };
 
 const appendSegment = async (
+  mediaSource: MediaSource,
   sourceBuffer: SourceBuffer,
   segmentData: SourceBufferData
 ) => {
   if (sourceBuffer.updating) await eventToPromise(sourceBuffer, 'updateend');
+
+  // If the media source is closed, we can't append segments.
+  // https://www.w3.org/TR/media-source/#sourcebuffer-prepare-append
+  if (mediaSource.readyState === 'closed') return;
 
   const promise = eventToPromise(sourceBuffer, 'updateend');
   sourceBuffer.appendBuffer(segmentData);
