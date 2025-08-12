@@ -2,9 +2,6 @@ import { getMultivariantPlaylist, getMediaPlaylist } from './playlists';
 import type { IMediaDisplay } from '../../types';
 import type { Rendition, Segment } from './types';
 
-// Takes an event dispatcher and event type yields
-// a promise that resolves to the event dispatched.
-type EventDispatcher = Pick<EventTarget, 'addEventListener'>;
 type SourceBufferData = Parameters<SourceBuffer['appendBuffer']>[0];
 
 type LoadMediaOptions = {
@@ -12,7 +9,7 @@ type LoadMediaOptions = {
 };
 
 const MIN_BUFFER_AHEAD = 5; // seconds: minimum buffer ahead to keep
-const BACK_BUFFER_TARGET = 20; // seconds of back buffer to keep when evicting
+const BACK_BUFFER_TARGET = 10; // seconds of back buffer to keep when evicting
 const GAP_TOLERANCE = 0.25; // seconds: treat tiny gaps between ranges as contiguous
 
 export const loadMedia = async (
@@ -336,7 +333,7 @@ const evictBuffer = async (sourceBuffer: SourceBuffer, currentTime: number) => {
 };
 
 export const eventToPromise = async (
-  eventDispatcher: EventDispatcher,
+  eventDispatcher: EventTarget,
   type: string
 ) => {
   return new Promise((resolve) => {

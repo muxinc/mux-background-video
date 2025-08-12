@@ -1,35 +1,26 @@
 import { IMediaDisplay, IMediaEngine } from '../../types';
 import { HlsMiniState } from './types';
 import { loadMedia } from './mediasource';
-import { createStore } from './utils';
 
 export class HlsMini implements IMediaEngine {
-  #store = createStore<HlsMiniState>({
-    src: '',
-  });
-
-  constructor() {
-    this.#store.listenKeys(
-      ['src', 'mediaDisplay'],
-      async (_, { src, mediaDisplay }) => {
-        if (mediaDisplay && src) {
-          const playlists = await loadMedia(src, mediaDisplay, {
-            maxResolution: '270p',
-          });
-        }
-      }
-    );
-  }
+  #src = '';
+  #mediaDisplay: IMediaDisplay | null = null;
 
   get src() {
-    return this.#store.get().src;
+    return this.#src;
   }
 
   set src(src: string) {
-    this.#store.put({ src });
+    this.#src = src;
+
+    if (this.#mediaDisplay) {
+      loadMedia(src, this.#mediaDisplay, {
+        // maxResolution: '270p',
+      });
+    }
   }
 
   attachMedia(mediaDisplay: IMediaDisplay) {
-    this.#store.put({ mediaDisplay });
+    this.#mediaDisplay = mediaDisplay;
   }
 }
