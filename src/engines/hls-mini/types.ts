@@ -1,5 +1,9 @@
 import { IMediaDisplay } from '../../types';
 
+export type HlsMiniConfig = {
+  maxResolution?: string;
+};
+
 export type HlsMiniState = {
   src: string;
   mediaDisplay?: IMediaDisplay;

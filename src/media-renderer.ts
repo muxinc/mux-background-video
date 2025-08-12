@@ -1,15 +1,15 @@
 import type { IMediaDisplay, IMediaEngine } from './types';
 // Use the HlsMini engine by default.
-import { HlsMini } from './engines/hls-mini';
+import { HlsMini, HlsMiniConfig } from './engines/hls-mini';
 
-class MediaRenderer extends EventTarget {
+export class MediaRenderer<T extends Record<string, any> = HlsMiniConfig> extends EventTarget {
   #display: IMediaDisplay;
-  #engine: IMediaEngine;
+  #engine: IMediaEngine<T>;
 
-  constructor(display: IMediaDisplay, engine?: IMediaEngine) {
+  constructor(display: IMediaDisplay, engine?: IMediaEngine<T>) {
     super();
     this.#display = display;
-    this.#engine = engine ?? new HlsMini();
+    this.#engine = engine ?? new HlsMini() as unknown as IMediaEngine<T>;
     this.#engine.attachMedia(this.#display);
   }
 
@@ -21,6 +21,14 @@ class MediaRenderer extends EventTarget {
     return this.#engine.src;
   }
 
+  get config(): T {
+    return this.#engine.config;
+  }
+
+  set config(config: T) {
+    this.#engine.config = config;
+  }
+
   play() {
     this.#display.play();
   }
@@ -29,5 +37,3 @@ class MediaRenderer extends EventTarget {
     this.#display.pause();
   }
 }
-
-export default MediaRenderer;

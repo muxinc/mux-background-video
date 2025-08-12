@@ -10,7 +10,9 @@ export interface IMediaDisplay extends PartialMediaInterface {
   removeEventListener: (type: string, listener: EventListener, options?: boolean | EventListenerOptions) => void;
 }
 
-export interface IMediaEngine {
+export interface IMediaEngine<T> {
   src: string;
+  config: T;
   attachMedia(media: IMediaDisplay): void;
+  update(): void;
 }

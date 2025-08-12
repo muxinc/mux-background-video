@@ -22,6 +22,8 @@ export const loadMedia = async (
     mediaEl.load();
   }
 
+  if (!uri) return;
+
   const { renditions } = await getMultivariantPlaylist(uri);
   const selected = selectRenditions(renditions, options);
   const mediaPlaylists = await Promise.all(selected.map(getMediaPlaylist));

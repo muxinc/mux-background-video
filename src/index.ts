@@ -1,1 +1,2 @@
-export { default as MediaRenderer } from './media-renderer';
+export { MediaRenderer } from './media-renderer';
+export { MuxBackgroundVideo } from './mux-background-video';

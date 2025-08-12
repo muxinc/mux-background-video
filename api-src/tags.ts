@@ -2,14 +2,20 @@
 // and extensions like es6-string-html to syntax highlight
 import escapeHtml from 'escape-html';
 
-export const html = (strings: TemplateStringsArray, ...values: unknown[]): string =>
-  sanitize(strings, values, escapeHtmlValue);
+export const html = (
+  strings: TemplateStringsArray,
+  ...values: unknown[]
+): string => sanitize(strings, values, escapeHtmlValue);
 
-export const css = (strings: TemplateStringsArray, ...values: unknown[]): string =>
-  sanitize(strings, values, escapeCSSValue);
+export const css = (
+  strings: TemplateStringsArray,
+  ...values: unknown[]
+): string => sanitize(strings, values, escapeCSSValue);
 
-export const js = (strings: TemplateStringsArray, ...values: unknown[]): string =>
-  sanitize(strings, values, escapeJSValue);
+export const js = (
+  strings: TemplateStringsArray,
+  ...values: unknown[]
+): string => sanitize(strings, values, escapeJSValue);
 
 export const attrs = (attrs: Record<string, unknown>): string[] =>
   Object.keys(attrs).map((attr) => html` ${attr}="${attrs[attr]}"`);
@@ -25,7 +31,8 @@ export const json = (data: object) => {
   return unsafeContent(json);
 };
 
-export const unsafeContent = (value: string): string => new SanitizedString(value) as unknown as string;
+export const unsafeContent = (value: string): string =>
+  new SanitizedString(value) as unknown as string;
 
 export function escapeHtmlValue(value: unknown): string {
   return escapeHtml(String(value));
@@ -41,7 +48,10 @@ function escapeCSSValue(value: unknown): string {
   if (typeof value !== 'string') return '';
 
   // Disallow unsafe URIs
-  if (isJavascriptURI(value) || (value.startsWith('data:') && !isSafeDataURI(value))) {
+  if (
+    isJavascriptURI(value) ||
+    (value.startsWith('data:') && !isSafeDataURI(value))
+  ) {
     return 'removed';
   }
 
@@ -72,16 +82,37 @@ export function escapeJSValue(value: unknown): string {
 
 class SanitizedString extends String {}
 
-function sanitize(strings: TemplateStringsArray, values: unknown[], escape: (value: unknown) => string): string {
+function sanitize(
+  strings: TemplateStringsArray,
+  values: unknown[],
+  escape: (value: unknown) => string
+): string {
   function escapeValue(value: unknown): string {
     if (Array.isArray(value)) {
       return value.map(escapeValue).join('');
     } else {
-      return value instanceof SanitizedString ? (value as string) : escape(String(value));
+      return value instanceof SanitizedString
+        ? (value as string)
+        : escape(String(value));
     }
   }
 
-  const escapedString = String.raw({ raw: strings }, ...values.map(escapeValue));
+  const escapedString = String.raw(
+    { raw: strings },
+    ...values.map(escapeValue)
+  );
 
   return new SanitizedString(escapedString) as unknown as string;
+}
+
+export function safeJsVar(value: string | null) {
+  if (value == null) return value;
+
+  if (typeof value === 'string') {
+    // Only allow alphanumeric characters, hyphens, underscores, dots,
+    // and forward slashes. This ensures we only get safe, simple values.
+    return /^[a-zA-Z0-9\-_.\/]+$/.test(value)
+      ? unsafeContent(`'${value}'`)
+      : undefined;
+  }
 }
