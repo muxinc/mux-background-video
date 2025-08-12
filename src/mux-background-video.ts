@@ -3,9 +3,22 @@ import { MediaRenderer } from './media-renderer';
 
 export class MuxBackgroundVideo<T extends Record<string, any>> extends MediaRenderer<T> {
   #maxResolution?: number;
+  #display: IMediaDisplay;
 
   constructor(display: IMediaDisplay, engine?: IMediaEngine<T>) {
     super(display, engine);
+    this.#display = display;
+  }
+
+  get config(): T {
+    return {
+      ...super.config,
+      muted: this.#display.muted,
+    };
+  }
+
+  set config(config: T) {
+    super.config = config;
   }
 
   get maxResolution() {

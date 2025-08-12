@@ -6,6 +6,7 @@ type SourceBufferData = Parameters<SourceBuffer['appendBuffer']>[0];
 
 type LoadMediaOptions = {
   maxResolution?: string;
+  muted?: boolean;
 };
 
 const MIN_BUFFER_AHEAD = 5; // seconds: minimum buffer ahead to keep
@@ -34,7 +35,7 @@ export const loadMedia = async (
 
 const selectRenditions = (
   renditions: Rendition[],
-  { maxResolution }: LoadMediaOptions = {}
+  { maxResolution, muted }: LoadMediaOptions = {}
 ) => {
   const videoRenditions = renditions.filter((rendition) => !rendition.type);
 
@@ -50,7 +51,7 @@ const selectRenditions = (
       .filter(({ groupId }) => groupId === selectedVideo.audio)
       .find((audio) => audio.default === 'YES');
 
-  return selectedAudio ? [selectedVideo, selectedAudio] : [selectedVideo];
+  return selectedAudio && !muted ? [selectedVideo, selectedAudio] : [selectedVideo];
 };
 
 const initMediaSource = async (
@@ -64,14 +65,10 @@ const initMediaSource = async (
   const duration = getMediaDuration(mediaPlaylists);
   if (duration > 0) mediaSource.duration = duration;
 
-  const isMuxed = mediaPlaylists.length === 1;
-
-  mediaPlaylists.forEach(({ mimeType, codec, codecs }) => {
-    const codecStr = isMuxed ? codecs : codec;
-
+  mediaPlaylists.forEach(({ mimeType, codec }) => {
     try {
       const sourceBuffer = mediaSource.addSourceBuffer(
-        `${mimeType}; codecs="${codecStr}"`
+        `${mimeType}; codecs="${codec}"`
       );
       if (duration > 0) {
         // Prevents a segment from being added beyond a certain time.

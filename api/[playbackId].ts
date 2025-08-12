@@ -39,7 +39,10 @@ function getHtml(params: Record<string, string | null | undefined>) {
       </style>
       <script type="module">
         import { MuxBackgroundVideo } from './dist/index.js';
+        
         const video = document.querySelector('#video');
+        video.addEventListener('error', () => console.log(video.error));
+
         let renderer = new MuxBackgroundVideo(video);
         renderer.maxResolution = ${maxResolution};
         renderer.src = 'https://stream.mux.com/${playbackId}.m3u8';
