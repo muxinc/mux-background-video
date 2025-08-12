@@ -2,12 +2,12 @@
   "name": "mux-background-video",
   "version": "0.0.1",
   "description": "",
-  "main": "index.js",
+  "main": "api/v.ts",
   "scripts": {
     "build": "esbuild src/index.ts --bundle --format=esm --outdir=dist",
-    "dev": "npm run watch & npm run serve",
+    "start": "npm run watch & npm run serve --",
     "watch": "npm run build -- --watch=forever",
-    "serve": "wet serve . --livereload"
+    "serve": "vercel dev"
   },
   "keywords": [
     "hls",
@@ -17,8 +17,13 @@
   "author": "@muxinc",
   "license": "MIT",
   "devDependencies": {
-    "esbuild": "^0.25.6",
-    "typescript": "^5.8.3",
+    "@types/escape-html": "^1.0.4",
+    "esbuild": "^0.25.8",
+    "typescript": "^5.9.2",
+    "vercel": "^44.7.3",
     "wet-run": "^1.2.5"
+  },
+  "dependencies": {
+    "escape-html": "^1.0.3"
   }
 }
