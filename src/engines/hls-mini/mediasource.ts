@@ -136,8 +136,11 @@ const initLoadSegments = (
                 try {
                   await appendSegment(mediaSource, sourceBuffer, chunk);
                 } catch (error: any) {
+                  // The buffer eviction algorithm auto runs when appending a segment.
+                  // If it was unable to evict enough data to accommodate the append
+                  // or the append is too big, we need to manually evict the buffer.
+                  // https://w3c.github.io/media-source/#sourcebuffer-coded-frame-eviction
                   if (error?.name === 'QuotaExceededError') {
-                    console.log('QuotaExceededError', mediaEl.currentTime);
                     await evictBuffer(sourceBuffer, mediaEl.currentTime);
                     // Retry once after eviction
                     await appendSegment(mediaSource, sourceBuffer, chunk);
