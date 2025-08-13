@@ -1,4 +1,4 @@
-import { Segment, Rendition } from './types';
+import { Segment, Rendition } from './types.js';
 
 type MediaPlaylistModel<T extends Segment = Segment> = T[];
 type MultivariantPlaylistModel<T extends Rendition = Rendition> = T[];

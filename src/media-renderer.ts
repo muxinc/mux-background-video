@@ -1,6 +1,6 @@
-import type { IMediaDisplay, IMediaEngine } from './types';
+import type { IMediaDisplay, IMediaEngine } from './types.js';
 // Use the HlsMini engine by default.
-import { HlsMini, HlsMiniConfig } from './engines/hls-mini';
+import { HlsMini, HlsMiniConfig } from './engines/hls-mini/index.js';
 
 export class MediaRenderer<T extends Record<string, any> = HlsMiniConfig> extends EventTarget {
   #display: IMediaDisplay;

@@ -1,4 +1,4 @@
-import { IMediaDisplay } from '../../types';
+import { IMediaDisplay } from '../../types.js';
 
 export type HlsMiniConfig = {
   maxResolution?: string;

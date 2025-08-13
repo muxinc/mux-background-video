@@ -1,5 +1,5 @@
-import type { IMediaDisplay, IMediaEngine } from './types';
-import { MediaRenderer } from './media-renderer';
+import type { IMediaDisplay, IMediaEngine } from './types.js';
+import { MediaRenderer } from './media-renderer.js';
 
 export class MuxBackgroundVideo<T extends Record<string, any>> extends MediaRenderer<T> {
   #maxResolution?: number;

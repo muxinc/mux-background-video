@@ -1,4 +1,4 @@
-import { html, attrs, safeJsVar } from '../api-src/tags';
+import { html, attrs, safeJsVar } from '../api-src/tags.js';
 
 export async function GET(req: Request) {
   return new Response(getHtml(req), {
@@ -45,7 +45,21 @@ function getHtml(req: Request) {
         import { MuxBackgroundVideo } from './dist/index.js';
 
         const video = document.querySelector('#video');
-        video.addEventListener('error', () => console.log(video.error));
+        video.addEventListener('error', () => {
+          console.log(video.error)
+        });
+        video.addEventListener('loadedmetadata', () => {
+          console.log('loadedmetadata', video.duration);
+        });
+        video.addEventListener('loadeddata', () => {
+          console.log('loadeddata');
+        });
+        video.addEventListener('canplay', () => {
+          console.log('canplay');
+        });
+        video.addEventListener('canplaythrough', () => {
+          console.log('canplaythrough');
+        });
 
         let renderer = new MuxBackgroundVideo(video);
         renderer.maxResolution = ${maxResolution};

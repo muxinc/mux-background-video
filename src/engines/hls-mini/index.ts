@@ -1,7 +1,7 @@
-import { IMediaDisplay, IMediaEngine } from '../../types';
-import { loadMedia } from './mediasource';
-import { HlsMiniConfig } from './types';
-export * from './types';
+import { IMediaDisplay, IMediaEngine } from '../../types.js';
+import { loadMedia } from './mediasource.js';
+import { HlsMiniConfig } from './types.js';
+export * from './types.js';
 
 export class HlsMini implements IMediaEngine<HlsMiniConfig> {
   #mediaDisplay: IMediaDisplay | null = null;

@@ -1,7 +1,7 @@
-import { getMultivariantPlaylist, getMediaPlaylist } from './playlists';
-import type { IMediaDisplay } from '../../types';
-import type { Rendition, Segment } from './types';
-import { ChunkedStreamIterable } from './chunked-stream-iterable';
+import { getMultivariantPlaylist, getMediaPlaylist } from './playlists.js';
+import type { IMediaDisplay } from '../../types.js';
+import type { Rendition, Segment } from './types.js';
+import { ChunkedStreamIterable } from './chunked-stream-iterable.js';
 
 type SourceBufferData = Parameters<SourceBuffer['appendBuffer']>[0];
 
@@ -88,13 +88,10 @@ const initMediaSource = async (
   return mediaSource;
 };
 
-const getMediaDuration = (mediaPlaylists: Rendition[]) => {
-  const [{ segments: vids = [] }, { segments: auds = [] } = {}] =
-    mediaPlaylists;
-
+const getMediaDuration = (playlists: Rendition[]) => {
+  const [{ segments: vids = [] }, { segments: auds = [] } = {}] = playlists;
   const videoDuration = vids.reduce((acc, { duration }) => acc + duration, 0);
   const audioDuration = auds.reduce((acc, { duration }) => acc + duration, 0);
-
   return Math.max(videoDuration, audioDuration);
 };
 
@@ -245,7 +242,7 @@ const getSegmentsToLoad = (
 };
 
 // Helper: end of the buffered range chain that contains currentTime, merging small gaps
-const getContiguousBufferedEnd = (ranges: TimeRanges, time: number) => {
+export const getContiguousBufferedEnd = (ranges: TimeRanges, time: number) => {
   if (ranges.length === 0) return time;
 
   for (let i = 0; i < ranges.length; i += 1) {
