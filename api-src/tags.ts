@@ -109,10 +109,17 @@ export function safeJsVar(value: string | null) {
   if (value == null) return value;
 
   if (typeof value === 'string') {
-    // Only allow alphanumeric characters, hyphens, underscores, dots,
-    // and forward slashes. This ensures we only get safe, simple values.
-    return /^[a-zA-Z0-9\-_.\/]+$/.test(value)
-      ? unsafeContent(`'${value}'`)
-      : undefined;
+    // For URLs, we need to allow more characters including colons and slashes
+    // Check if it's a valid URL first
+    try {
+      new URL(value);
+      // If it's a valid URL, allow it
+    } catch {
+      // If not a URL, fall back to the strict regex for simple values
+      if (!/^[a-zA-Z0-9\-_.\/]+$/.test(value)) {
+        return undefined;
+      }
+    }
+    return unsafeContent(`'${value}'`);
   }
 }

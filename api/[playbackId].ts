@@ -12,14 +12,16 @@ function getParams(req: Request) {
   const url = new URL(req.url);
   const searchParams = url.searchParams;
   const defaultPlaybackId = 'crDG1Lz1004PuNKSqiw02PFumJlY7nx500v5M02RXdD36hg';
+  const playbackId = searchParams.get('playbackId') || defaultPlaybackId;
   return {
-    playbackId: safeJsVar(searchParams.get('playbackId')) || defaultPlaybackId,
+    src: safeJsVar(`https://stream.mux.com/${playbackId}.m3u8`),
     maxResolution: safeJsVar(searchParams.get('maxResolution')),
   };
 }
 
 function getHtml(req: Request) {
-  const { playbackId, maxResolution } = getParams(req);
+  const { src, maxResolution } = getParams(req);
+
   return html` <html>
     <head>
       <title>Mux Background Video Demo</title>
@@ -37,18 +39,18 @@ function getHtml(req: Request) {
           object-fit: cover;
         }
       </style>
+    </head>
+    <body>
       <script type="module">
         import { MuxBackgroundVideo } from './dist/index.js';
-        
+
         const video = document.querySelector('#video');
         video.addEventListener('error', () => console.log(video.error));
 
         let renderer = new MuxBackgroundVideo(video);
         renderer.maxResolution = ${maxResolution};
-        renderer.src = 'https://stream.mux.com/${playbackId}.m3u8';
+        renderer.src = ${src};
       </script>
-    </head>
-    <body>
       <video id="video" ${getVideoAttributes(req)}></video>
     </body>
   </html>`;
