@@ -1,27 +1,17 @@
-export type ChunkedStreamIterableOptions = {
-  minChunkSize: number;
-};
-
-export interface ChunkedIterable extends AsyncIterable<Uint8Array<ArrayBufferLike>> {
-  readonly minChunkSize: number;
+export interface ChunkedIterable
+  extends AsyncIterable<Uint8Array<ArrayBufferLike>> {
   readonly error: Error | undefined;
 }
 
 const DEFAULT_MIN_CHUNK_SIZE = Math.pow(2, 17); // 128kb
 
 export class ChunkedStreamIterable implements ChunkedIterable {
-  protected _error: Error | undefined;
-  public readonly minChunkSize: number;
+  #error: Error | undefined;
 
-  constructor(
-    protected readableStream: NonNullable<Response['body']>,
-    { minChunkSize = DEFAULT_MIN_CHUNK_SIZE }: ChunkedStreamIterableOptions = { minChunkSize: DEFAULT_MIN_CHUNK_SIZE }
-  ) {
-    this.minChunkSize = minChunkSize;
-  }
+  constructor(protected readableStream: NonNullable<Response['body']>) {}
 
   get error() {
-    return this._error;
+    return this.#error;
   }
 
   async *[Symbol.asyncIterator](): AsyncIterator<Uint8Array<ArrayBufferLike>> {
@@ -41,7 +31,9 @@ export class ChunkedStreamIterable implements ChunkedIterable {
         }
 
         if (chunk) {
-          let newChunk: Uint8Array<ArrayBuffer> | undefined = new Uint8Array(chunk.length + value.length);
+          let newChunk: Uint8Array<ArrayBuffer> | undefined = new Uint8Array(
+            chunk.length + value.length
+          );
           newChunk.set(chunk);
           newChunk.set(value, chunk.length);
           chunk = newChunk;
@@ -51,7 +43,7 @@ export class ChunkedStreamIterable implements ChunkedIterable {
         }
 
         while (chunk) {
-          if (chunk.length >= this.minChunkSize) {
+          if (chunk.length >= DEFAULT_MIN_CHUNK_SIZE) {
             const outgoingChunk = chunk;
             chunk = undefined;
             yield outgoingChunk;
@@ -61,9 +53,9 @@ export class ChunkedStreamIterable implements ChunkedIterable {
           }
         }
       }
-    } catch (e) {
+    } catch (error) {
       // There are edge case errors when attempting to read() from ReadableStream reader.
-      this._error = e as Error;
+      this.#error = error as Error;
     } finally {
       // Last chunk, if any bits remain
       if (chunk) {
