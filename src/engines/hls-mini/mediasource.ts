@@ -10,9 +10,9 @@ type LoadMediaOptions = {
   muted?: boolean;
 };
 
-const MIN_BUFFER_AHEAD = 5; // seconds: minimum buffer ahead to keep
-const BACK_BUFFER_TARGET = 10; // seconds of back buffer to keep when evicting
-const GAP_TOLERANCE = 0.25; // seconds: treat tiny gaps between ranges as contiguous
+export const MIN_BUFFER_AHEAD = 5; // seconds: minimum buffer ahead to keep
+export const BACK_BUFFER_TARGET = 10; // seconds of back buffer to keep when evicting
+export const GAP_TOLERANCE = 0.25; // seconds: treat tiny gaps between ranges as contiguous
 
 export const loadMedia = async (
   uri: string,
@@ -193,11 +193,11 @@ const checkEndOfStream = (mediaSource: MediaSource, mediaDuration: number) => {
 
 // Decide which segments to load next to ensure at least MIN_BUFFER_AHEAD seconds
 // are available ahead of the current playback position.
-const getSegmentsToLoad = (
+export const getSegmentsToLoad = (
   segments: Segment[] = [],
   buffered: TimeRanges,
   currentTime: number
-): Segment[] => {
+) => {
   const toLoad: Segment[] = [];
   const addedUris = new Set<string>();
 
