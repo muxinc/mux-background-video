@@ -1,7 +1,7 @@
-import { html, safeJsVar } from '../api-src/tags';
+import { html, attrs, safeJsVar } from '../api-src/tags';
 
 export async function GET(req: Request) {
-  return new Response(getHtml(getParams(req)), {
+  return new Response(getHtml(req), {
     headers: {
       'Content-Type': 'text/html',
     },
@@ -18,8 +18,8 @@ function getParams(req: Request) {
   };
 }
 
-function getHtml(params: Record<string, string | null | undefined>) {
-  const { playbackId, maxResolution } = params;
+function getHtml(req: Request) {
+  const { playbackId, maxResolution } = getParams(req);
   return html` <html>
     <head>
       <title>Mux Background Video Demo</title>
@@ -49,7 +49,45 @@ function getHtml(params: Record<string, string | null | undefined>) {
       </script>
     </head>
     <body>
-      <video id="video" autoplay muted loop playsinline></video>
+      <video id="video" ${getVideoAttributes(req)}></video>
     </body>
   </html>`;
+}
+
+function getVideoAttributes(req: Request) {
+  const searchParams = new URL(req.url).searchParams;
+  const allowedAttributes = [
+    'autopictureinpicture',
+    'disablepictureinpicture',
+    'disableremoteplayback',
+    'autoplay',
+    'controls',
+    'controlslist',
+    'crossorigin',
+    'loop',
+    'muted',
+    'playsinline',
+    'poster',
+    'preload',
+  ];
+
+  const attributes: Record<string, any> = {
+    autoplay: '',
+    muted: '',
+    loop: '',
+    playsinline: '',
+  };
+
+  for (const attr of allowedAttributes) {
+    const value = searchParams.get(attr);
+    if (value === 'true' || value === '1') {
+      attributes[attr] = '';
+    } else if (value === 'false' || value === '0') {
+      delete attributes[attr];
+    } else if (value) {
+      attributes[attr] = value;
+    }
+  }
+
+  return attrs(attributes);
 }
