@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/favicon.ico",
+      "destination": "/public/favicon.ico"
+    },
+    {
       "source": "/:match",
       "destination": "/api/:match"
     },
