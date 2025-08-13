@@ -1,6 +1,7 @@
 import { getMultivariantPlaylist, getMediaPlaylist } from './playlists';
 import type { IMediaDisplay } from '../../types';
 import type { Rendition, Segment } from './types';
+import { ChunkedStreamIterable } from './chunked-stream-iterable';
 
 type SourceBufferData = Parameters<SourceBuffer['appendBuffer']>[0];
 
@@ -51,7 +52,9 @@ const selectRenditions = (
       .filter(({ groupId }) => groupId === selectedVideo.audio)
       .find((audio) => audio.default === 'YES');
 
-  return selectedAudio && !muted ? [selectedVideo, selectedAudio] : [selectedVideo];
+  return selectedAudio && !muted
+    ? [selectedVideo, selectedAudio]
+    : [selectedVideo];
 };
 
 const initMediaSource = async (
@@ -127,17 +130,20 @@ const initLoadSegments = (
                 segUrl.hostname,
                 segUrl.pathname
               );
-              const segmentData = await fetchSegment(segment.uri!);
-              try {
-                await appendSegment(mediaSource, sourceBuffer, segmentData);
-              } catch (error: any) {
-                if (error?.name === 'QuotaExceededError') {
-                  console.log('QuotaExceededError', mediaEl.currentTime);
-                  await evictBuffer(sourceBuffer, mediaEl.currentTime);
-                  // Retry once after eviction
-                  await appendSegment(mediaSource, sourceBuffer, segmentData);
-                } else {
-                  throw error;
+
+              const segmentChunks = await fetchSegmentChunks(segment.uri!);
+              for await (const chunk of segmentChunks) {
+                try {
+                  await appendSegment(mediaSource, sourceBuffer, chunk);
+                } catch (error: any) {
+                  if (error?.name === 'QuotaExceededError') {
+                    console.log('QuotaExceededError', mediaEl.currentTime);
+                    await evictBuffer(sourceBuffer, mediaEl.currentTime);
+                    // Retry once after eviction
+                    await appendSegment(mediaSource, sourceBuffer, chunk);
+                  } else {
+                    throw error;
+                  }
                 }
               }
             } catch (error) {
@@ -284,12 +290,12 @@ const isRangeInBuffered = (
   return false;
 };
 
-const fetchSegment = async (uri: string) => {
+const fetchSegmentChunks = async (uri: string) => {
   const response = await fetch(uri);
-  if (!response.ok) {
+  if (!response.ok || !response.body) {
     throw new Error(`Failed to fetch segment: ${response.status}`);
   }
-  return response.arrayBuffer();
+  return new ChunkedStreamIterable(response.body);
 };
 
 const appendSegment = async (
