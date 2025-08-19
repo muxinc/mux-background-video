@@ -14,24 +14,40 @@ export const MIN_BUFFER_AHEAD = 5; // seconds: minimum buffer ahead to keep
 export const BACK_BUFFER_TARGET = 10; // seconds of back buffer to keep when evicting
 export const GAP_TOLERANCE = 0.25; // seconds: treat tiny gaps between ranges as contiguous
 
-export const loadMedia = async (
+export const loadMedia = (
   uri: string,
   mediaEl: IMediaDisplay,
   options: LoadMediaOptions = {}
 ) => {
-  if (mediaEl.src) {
-    mediaEl.src = '';
-    mediaEl.load();
-  }
-
   if (!uri) return;
 
-  const { renditions } = await getMultivariantPlaylist(uri);
-  const selected = selectRenditions(renditions, options);
-  const mediaPlaylists = await Promise.all(selected.map(getMediaPlaylist));
-  const mediaSource = await initMediaSource(mediaPlaylists, mediaEl);
-  initLoadSegments(mediaPlaylists, mediaSource, mediaEl);
-  return mediaPlaylists;
+  const abortController = new AbortController();
+  const signal = abortController.signal;
+
+  const unload = () => {
+    if (mediaEl.src) {
+      mediaEl.src = '';
+      mediaEl.load();
+    }
+    abortController.abort('unload');
+  };
+
+  getMultivariantPlaylist(uri, signal).then(async ({ renditions }) => {
+    const selected = selectRenditions(renditions, options);
+    const mediaPlaylists = await Promise.all(
+      selected.map((playlist) => getMediaPlaylist(playlist, signal))
+    );
+
+    if (signal.aborted) return;
+
+    const mediaSource = await initMediaSource(mediaPlaylists, mediaEl);
+    initLoadSegments(mediaPlaylists, mediaSource, mediaEl, signal);
+  }).catch((error) => {
+    if (error === 'unload') return;
+    throw error;
+  });
+
+  return unload;
 };
 
 const selectRenditions = (
@@ -98,11 +114,19 @@ const getMediaDuration = (playlists: Rendition[]) => {
 const initLoadSegments = (
   mediaPlaylists: Rendition[],
   mediaSource: MediaSource,
-  mediaEl: IMediaDisplay
+  mediaEl: IMediaDisplay,
+  signal: AbortSignal
 ) => {
   let isLoading = false;
+  let checkInterval: NodeJS.Timeout;
 
   const loadNextSegments = async () => {
+    if (signal.aborted) {
+      mediaEl.removeEventListener('timeupdate', loadNextSegments);
+      clearInterval(checkInterval);
+      return;
+    }
+
     if (isLoading) return;
     isLoading = true;
 
@@ -131,9 +155,9 @@ const initLoadSegments = (
               const segmentChunks = await fetchSegmentChunks(segment.uri!);
               for await (const chunk of segmentChunks) {
                 try {
+                  // The buffer eviction algorithm auto runs when appending a segment.
                   await appendSegment(mediaSource, sourceBuffer, chunk);
                 } catch (error: any) {
-                  // The buffer eviction algorithm auto runs when appending a segment.
                   // If it was unable to evict enough data to accommodate the append
                   // or the append is too big, we need to manually evict the buffer.
                   // https://w3c.github.io/media-source/#sourcebuffer-coded-frame-eviction
@@ -164,17 +188,9 @@ const initLoadSegments = (
   loadNextSegments();
 
   // timeupdate events are unreliable, also use an interval
-  const checkInterval = setInterval(loadNextSegments, 500);
+  checkInterval = setInterval(loadNextSegments, 500);
 
   mediaEl.addEventListener('timeupdate', loadNextSegments);
-  mediaEl.addEventListener(
-    'emptied',
-    () => {
-      mediaEl.removeEventListener('timeupdate', loadNextSegments);
-      clearInterval(checkInterval);
-    },
-    { once: true }
-  );
 };
 
 const checkEndOfStream = (mediaSource: MediaSource, mediaDuration: number) => {

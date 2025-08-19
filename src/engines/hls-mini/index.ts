@@ -7,6 +7,7 @@ export class HlsMini implements IMediaEngine<HlsMiniConfig> {
   #mediaDisplay: IMediaDisplay | null = null;
   #src = '';
   #config: HlsMiniConfig = {};
+  #unloadMedia?: () => void;
 
   get src() {
     return this.#src;
@@ -33,7 +34,8 @@ export class HlsMini implements IMediaEngine<HlsMiniConfig> {
   update() {
     if (this.#mediaDisplay) {
       console.log('update', this.#src, this.config);
-      loadMedia(this.src, this.#mediaDisplay, this.config);
+      this.#unloadMedia?.();
+      this.#unloadMedia = loadMedia(this.src, this.#mediaDisplay, this.config);
     }
   }
 }

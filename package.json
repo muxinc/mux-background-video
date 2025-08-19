@@ -5,7 +5,7 @@
   "type": "module",
   "main": "api/v.ts",
   "scripts": {
-    "build": "esbuild src/index.ts --bundle --format=esm --outdir=dist",
+    "build": "esbuild src/index.ts --bundle --minify --format=esm --outdir=dist",
     "start": "npm run watch & npm run serve --",
     "watch": "npm run build -- --watch=forever",
     "serve": "vercel dev",

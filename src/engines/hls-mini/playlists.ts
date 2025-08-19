@@ -104,10 +104,11 @@ const MultivariantPlaylistReducerTuples: ReducerTuple<MultivariantPlaylistModel>
 
 // Takes a URI for a multivariant playlist and asynchronously yields a model of
 // the playlist with the URI
-export const getMultivariantPlaylist = async (uri: string) => {
+export const getMultivariantPlaylist = async (uri: string, signal: AbortSignal) => {
   const renditions = await getPlaylistFromURI(
     uri,
-    MultivariantPlaylistReducerTuples
+    MultivariantPlaylistReducerTuples,
+    signal
   );
   return { uri, renditions };
 };
@@ -115,13 +116,14 @@ export const getMultivariantPlaylist = async (uri: string) => {
 // Takes a media playlist data model (typically derived from a multivariant playlist)
 // and asynchronously yields an updated model with the media playlist data.
 export const getMediaPlaylist = async <T extends Rendition>(
-  mediaPlaylistData: T
+  mediaPlaylistData: T,
+  signal: AbortSignal
 ) => {
   if (!mediaPlaylistData.uri) {
     throw new Error('Media playlist data must have a URI');
   }
   const segments = addSegmentStartAndEndTimes(
-    await getPlaylistFromURI(mediaPlaylistData.uri, MediaPlaylistReducerTuples)
+    await getPlaylistFromURI(mediaPlaylistData.uri, MediaPlaylistReducerTuples, signal)
   );
   return { ...mediaPlaylistData, segments };
 };
@@ -141,11 +143,12 @@ const addSegmentStartAndEndTimes = (segments: Segment[]) => {
 // representation of it.
 const getPlaylistFromURI = async <T>(
   uri: string,
-  PlaylistReducerTuples: ReducerTuple<T>[]
+  PlaylistReducerTuples: ReducerTuple<T>[],
+  signal: AbortSignal
 ): Promise<T> => {
   const baseURI = uriToBaseURI(uri);
   const context = { baseURI };
-  return fetch(uri)
+  return fetch(uri, { signal })
     .then((resp) => resp.text())
     .then((playlistStr) =>
       reducedParse(playlistStr, PlaylistReducerTuples, context)

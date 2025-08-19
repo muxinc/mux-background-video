@@ -8,20 +8,7 @@ export async function GET(req: Request) {
   });
 }
 
-function getParams(req: Request) {
-  const url = new URL(req.url);
-  const searchParams = url.searchParams;
-  const defaultPlaybackId = 'crDG1Lz1004PuNKSqiw02PFumJlY7nx500v5M02RXdD36hg';
-  const playbackId = searchParams.get('playbackId') || defaultPlaybackId;
-  return {
-    src: safeJsVar(`https://stream.mux.com/${playbackId}.m3u8`),
-    maxResolution: safeJsVar(searchParams.get('maxResolution')),
-  };
-}
-
 function getHtml(req: Request) {
-  const { src, maxResolution } = getParams(req);
-
   return html` <html>
     <head>
       <title>Mux Background Video Demo</title>
@@ -33,7 +20,9 @@ function getHtml(req: Request) {
           background-color: #000;
         }
 
-        #video {
+        mux-background-video, 
+        video {
+          display: block;
           width: 100%;
           height: 100%;
           object-fit: cover;
@@ -42,7 +31,7 @@ function getHtml(req: Request) {
     </head>
     <body>
       <script type="module">
-        import { MuxBackgroundVideo } from './dist/index.js';
+        import { MuxBackgroundVideoElement } from './dist/index.js';
 
         const video = document.querySelector('#video');
         video.addEventListener('error', () => {
@@ -60,18 +49,25 @@ function getHtml(req: Request) {
         video.addEventListener('canplaythrough', () => {
           console.log('canplaythrough');
         });
-
-        let renderer = new MuxBackgroundVideo(video);
-        renderer.maxResolution = ${maxResolution};
-        renderer.src = ${src};
       </script>
-      <video id="video" ${getVideoAttributes(req)}></video>
+      <mux-background-video ${getBackgroundVideoAttributes(req)}>
+        <video id="video" ${getVideoAttributes(req)}></video>
+      </mux-background-video>
     </body>
   </html>`;
 }
 
-function getVideoAttributes(req: Request) {
+function getBackgroundVideoAttributes(req: Request) {
   const searchParams = new URL(req.url).searchParams;
+  const defaultPlaybackId = 'crDG1Lz1004PuNKSqiw02PFumJlY7nx500v5M02RXdD36hg';
+  const playbackId = searchParams.get('playbackId') || defaultPlaybackId;
+
+  return getAttributes(req, ['src', 'max-resolution'], {
+    src: `https://stream.mux.com/${playbackId}.m3u8`,
+  });
+}
+
+function getVideoAttributes(req: Request) {
   const allowedAttributes = [
     'autopictureinpicture',
     'disablepictureinpicture',
@@ -93,6 +89,13 @@ function getVideoAttributes(req: Request) {
     loop: '',
     playsinline: '',
   };
+
+  return getAttributes(req, allowedAttributes, attributes);
+}
+
+function getAttributes(req: Request, allowedAttributes: string[], defaultAttributes: Record<string, any>) {
+  const searchParams = new URL(req.url).searchParams;
+  const attributes: Record<string, any> = { ...defaultAttributes };
 
   for (const attr of allowedAttributes) {
     const value = searchParams.get(attr);

@@ -2,38 +2,72 @@ import type { IMediaDisplay, IMediaEngine } from './types.js';
 // Use the HlsMini engine by default.
 import { HlsMini, HlsMiniConfig } from './engines/hls-mini/index.js';
 
-export class MediaRenderer<T extends Record<string, any> = HlsMiniConfig> extends EventTarget {
-  #display: IMediaDisplay;
-  #engine: IMediaEngine<T>;
+type Constructor<T> = {
+  new (...args: any[]): T;
+  prototype: T;
+};
 
-  constructor(display: IMediaDisplay, engine?: IMediaEngine<T>) {
-    super();
-    this.#display = display;
-    this.#engine = engine ?? new HlsMini() as unknown as IMediaEngine<T>;
-    this.#engine.attachMedia(this.#display);
-  }
+export function MediaRendererMixin<T extends Constructor<EventTarget>>(
+  Base: T
+) {
+  return class MediaRendererClass extends Base {
+    #display?: IMediaDisplay;
+    #engine?: IMediaEngine<Record<string, any>>;
+    #src = '';
+    #config?: Record<string, any>;
 
-  set src(uri: string) {
-    this.#engine.src = uri;
-  }
+    get display() {
+      return this.#display;
+    }
 
-  get src() {
-    return this.#engine.src;
-  }
+    set display(display: IMediaDisplay | undefined) {
+      this.#display = display;
+      this.load();
+    }
 
-  get config(): T {
-    return this.#engine.config;
-  }
+    set src(uri: string) {
+      this.#src = uri;
+      this.load();
+    }
 
-  set config(config: T) {
-    this.#engine.config = config;
-  }
+    get src() {
+      return this.#src;
+    }
 
-  play() {
-    this.#display.play();
-  }
+    get config(): Record<string, any> | undefined {
+      return this.#config;
+    }
 
-  pause() {
-    this.#display.pause();
-  }
+    set config(config: Record<string, any>) {
+      this.#config = config;
+      this.load();
+    }
+
+    load() {
+      if (!this.#engine) {
+        this.#engine = new HlsMini() as unknown as IMediaEngine<
+          Record<string, any>
+        >;
+      }
+      if (this.#display) {
+        this.#engine.attachMedia(this.#display);
+      }
+      if (this.#config) {
+        this.#engine.config = this.#config;
+      }
+      if (this.#src) {
+        this.#engine.src = this.#src;
+      }
+    }
+
+    play() {
+      this.#display?.play();
+    }
+
+    pause() {
+      this.#display?.pause();
+    }
+  };
 }
+
+export const MediaRenderer = MediaRendererMixin(EventTarget);
