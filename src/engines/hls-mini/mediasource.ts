@@ -156,7 +156,7 @@ const initLoadSegments = (
               for await (const chunk of segmentChunks) {
                 try {
                   // The buffer eviction algorithm auto runs when appending a segment.
-                  await appendSegment(mediaSource, sourceBuffer, chunk);
+                  await appendSegment(mediaSource, sourceBuffer, new Uint8Array(chunk));
                 } catch (error: any) {
                   // If it was unable to evict enough data to accommodate the append
                   // or the append is too big, we need to manually evict the buffer.
@@ -164,7 +164,7 @@ const initLoadSegments = (
                   if (error?.name === 'QuotaExceededError') {
                     await evictBuffer(sourceBuffer, mediaEl.currentTime);
                     // Retry once after eviction
-                    await appendSegment(mediaSource, sourceBuffer, chunk);
+                    await appendSegment(mediaSource, sourceBuffer, new Uint8Array(chunk));
                   } else {
                     throw error;
                   }

@@ -1,4 +1,4 @@
-import { html, attrs, safeJsVar } from '../api-src/tags.js';
+import { html, attrs } from '../api-src/tags.js';
 
 export async function GET(req: Request) {
   return new Response(getHtml(req), {
@@ -31,7 +31,7 @@ function getHtml(req: Request) {
     </head>
     <body>
       <script type="module">
-        import { MuxBackgroundVideoElement } from './dist/index.js';
+        import { MuxBackgroundVideoElement } from './dist/mux-background-video.js';
 
         const video = document.querySelector('#video');
         video.addEventListener('error', () => {

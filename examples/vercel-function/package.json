@@ -1,0 +1,30 @@
+{
+  "name": "mux-background-video-html-example",
+  "version": "0.0.1",
+  "description": "",
+  "type": "module",
+  "main": "dist/mux-background-video.js",
+  "scripts": {
+    "build": "esbuild src/mux-background-video.ts --bundle --minify --format=esm --outdir=dist",
+    "types": "tsc",
+    "start": "npm run serve --",
+    "serve": "vercel dev"
+  },
+  "keywords": [
+    "hls",
+    "video",
+    "engine"
+  ],
+  "author": "@muxinc",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/escape-html": "^1.0.4",
+    "esbuild": "^0.25.9",
+    "typescript": "^5.9.2",
+    "vercel": "^44.7.3"
+  },
+  "dependencies": {
+    "escape-html": "^1.0.3",
+    "mux-background-video": "file:../.."
+  }
+}

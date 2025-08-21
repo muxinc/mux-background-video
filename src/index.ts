@@ -1,1 +1,1 @@
-export { MuxBackgroundVideoElement } from './mux-background-video-element.js';
+export { MuxBackgroundVideo } from './mux-background-video.js';

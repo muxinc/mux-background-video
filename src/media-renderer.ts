@@ -1,6 +1,6 @@
 import type { IMediaDisplay, IMediaEngine } from './types.js';
 // Use the HlsMini engine by default.
-import { HlsMini, HlsMiniConfig } from './engines/hls-mini/index.js';
+import { HlsMini } from './engines/hls-mini/index.js';
 
 type Constructor<T> = {
   new (...args: any[]): T;
