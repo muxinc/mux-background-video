@@ -25,13 +25,13 @@
     }
   },
   "scripts": {
-    "build": "npm-run-all types \"build:**\"",
+    "build": "run-s types \"build:** --\"",
     "build:esm:core": "esbuild src/index.ts --bundle --minify --format=esm --outdir=dist",
     "build:esm:react": "esbuild src/react.tsx --bundle --minify --format=esm --outdir=dist --external:react",
     "build:esm:html": "esbuild src/html.ts --bundle --minify --format=esm --outdir=dist",
     "types": "tsc",
-    "start": "npm run watch & npm run serve --",
-    "watch": "npm run build -- --watch=forever",
+    "watch": "run-p \"types -- -w\" \"build:** -- --watch=forever\"",
+    "start": "run-p watch serve",
     "serve": "vercel dev",
     "test": "web-test-runner"
   },

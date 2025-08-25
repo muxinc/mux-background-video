@@ -15,7 +15,7 @@ export class HlsMini implements IMediaEngine<HlsMiniConfig> {
 
   set src(src: string) {
     this.#src = src;
-    this.update();
+    this.load();
   }
 
   get config() {
@@ -24,16 +24,15 @@ export class HlsMini implements IMediaEngine<HlsMiniConfig> {
 
   set config(config: HlsMiniConfig) {
     this.#config = config;
-    this.update();
   }
 
   attachMedia(mediaDisplay: IMediaDisplay) {
     this.#mediaDisplay = mediaDisplay;
   }
 
-  update() {
+  load() {
     if (this.#mediaDisplay) {
-      console.log('update', this.#src, this.config);
+      console.log('load', this.#src, this.config);
       this.#unloadMedia?.();
       this.#unloadMedia = loadMedia(this.src, this.#mediaDisplay, this.config);
     }

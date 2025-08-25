@@ -15,5 +15,5 @@ export interface IMediaEngine<T> {
   src: string;
   config: T;
   attachMedia(media: IMediaDisplay): void;
-  update(): void;
+  load(): void;
 }

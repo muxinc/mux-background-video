@@ -15,6 +15,7 @@ export function MediaRendererMixin<T extends Constructor<EventTarget>>(
     #engine?: IMediaEngine<Record<string, any>>;
     #src = '';
     #config?: Record<string, any>;
+    #loadRequested?: Promise<void> | null;
 
     get display() {
       return this.#display;
@@ -22,12 +23,12 @@ export function MediaRendererMixin<T extends Constructor<EventTarget>>(
 
     set display(display: IMediaDisplay | undefined) {
       this.#display = display;
-      this.load();
+      this.#requestLoad();
     }
 
     set src(uri: string) {
       this.#src = uri;
-      this.load();
+      this.#requestLoad();
     }
 
     get src() {
@@ -40,6 +41,13 @@ export function MediaRendererMixin<T extends Constructor<EventTarget>>(
 
     set config(config: Record<string, any>) {
       this.#config = config;
+      this.#requestLoad();
+    }
+
+    async #requestLoad() {
+      if (this.#loadRequested) return;
+      await (this.#loadRequested = Promise.resolve());
+      this.#loadRequested = null;
       this.load();
     }
 
@@ -49,14 +57,14 @@ export function MediaRendererMixin<T extends Constructor<EventTarget>>(
           Record<string, any>
         >;
       }
-      if (this.#display) {
-        this.#engine.attachMedia(this.#display);
+      if (this.display) {
+        this.#engine.attachMedia(this.display);
       }
-      if (this.#config) {
-        this.#engine.config = this.#config;
+      if (this.config) {
+        this.#engine.config = this.config;
       }
-      if (this.#src) {
-        this.#engine.src = this.#src;
+      if (this.src) {
+        this.#engine.src = this.src;
       }
     }
 
