@@ -9,6 +9,8 @@ A lightweight library for creating background videos using Mux HLS streams with 
 - **Background Video**: Perfect for hero sections, landing pages, and immersive experiences
 - **TypeScript Support**: Full TypeScript definitions included
 - **Lightweight**: Minimal bundle size with no heavy dependencies
+- **React**: React component for easy integration
+- **Web Components**: Custom HTML element for easy integration
 
 ## Installation
 
@@ -18,25 +20,9 @@ npm install mux-background-video
 
 ## Usage
 
-### Basic Implementation
+### HTML Custom Element
 
-```typescript
-import { MuxBackgroundVideo } from 'mux-background-video';
-
-// Get your video element
-const videoElement = document.querySelector('#background-video');
-
-// Create the background video instance
-const backgroundVideo = new MuxBackgroundVideo(videoElement);
-
-// Set the Mux HLS stream URL
-backgroundVideo.src = 'https://stream.mux.com/YOUR_PLAYBACK_ID.m3u8';
-
-// Optional: Set maximum resolution for performance
-backgroundVideo.maxResolution = '720p'; // 720p max
-```
-
-### HTML Example
+The easiest way to use Mux Background Video is with the custom HTML element:
 
 ```html
 <!DOCTYPE html>
@@ -50,54 +36,116 @@ backgroundVideo.maxResolution = '720p'; // 720p max
             background-color: #000;
         }
         
-        #video {
-            width: 100%;
+        mux-background-video, 
+        video {
+            display: block;
+            width: 100vw;
             height: 100vh;
             object-fit: cover;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: -1;
         }
     </style>
+    <script type="module" src="http://cdn.jsdelivr.net/npm/mux-background-video/html/+esm"></script>
 </head>
 <body>
-    <video id="video" autoplay muted loop playsinline></video>
-    
-    <script type="module">
-        import { MuxBackgroundVideo } from 'mux-background-video';
-        
-        const video = document.querySelector('#video');
-        const backgroundVideo = new MuxBackgroundVideo(video);
-        
-        // Set your Mux playback ID
-        backgroundVideo.src = 'https://stream.mux.com/YOUR_PLAYBACK_ID.m3u8';
-        
-        // Optional: Limit resolution for better performance
-        backgroundVideo.maxResolution = '720p';
-    </script>
+    <mux-background-video 
+        src="https://stream.mux.com/YOUR_PLAYBACK_ID.m3u8" 
+        max-resolution="720p"
+    >
+        <video autoplay muted loop playsinline></video>
+    </mux-background-video>
 </body>
 </html>
 ```
 
-## API Reference
+### JavaScript Import
 
-### MuxBackgroundVideo Class
+You can also import the custom element class directly:
 
-#### Constructor
 ```typescript
-new MuxBackgroundVideo(display: IMediaDisplay, engine?: IMediaEngine)
+import { MuxBackgroundVideoElement } from 'mux-background-video/html';
+
+// The custom element is automatically registered
+// You can now use <mux-background-video> in your HTML
 ```
 
-#### Properties
+### React Component
 
-- **`src`**: Set the HLS stream URL
-- **`maxResolution`**: Set maximum resolution (e.g., 720p, 1080p)
+For React applications, use the React component:
 
-#### Methods
+```typescript
+import { MuxBackgroundVideo } from 'mux-background-video/react';
 
-- **`play()`**: Start playback
-- **`pause()`**: Pause playback
+function HeroSection() {
+  return (
+    <MuxBackgroundVideo
+      src="https://stream.mux.com/YOUR_PLAYBACK_ID.m3u8"
+      maxResolution="720p"
+      autoPlay 
+      muted 
+      loop 
+      playsInline
+    />
+  );
+}
+```
+
+## API Reference
+
+### HTML Custom Element: `<mux-background-video>`
+
+The `<mux-background-video>` element wraps a `<video>` element and automatically handles HLS streaming.
+
+#### Attributes
+
+- **`src`**: The Mux HLS stream URL (required)
+- **`max-resolution`**: Maximum resolution for the video (e.g., "720p", "1080p")
+
+#### HTML Structure
+
+```html
+<mux-background-video src="YOUR_STREAM_URL" max-resolution="720p">
+    <video autoplay muted loop playsinline></video>
+</mux-background-video>
+```
+
+#### JavaScript Properties
+
+You can also set properties programmatically:
+
+```typescript
+const element = document.querySelector('mux-background-video');
+
+// Set the stream URL
+element.src = 'https://stream.mux.com/NEW_PLAYBACK_ID.m3u8';
+
+// Set maximum resolution
+element.maxResolution = '1080p';
+
+// Get current values
+console.log(element.src);
+console.log(element.maxResolution);
+```
+
+### React Component: `MuxBackgroundVideo`
+
+#### Props
+
+- **`src`**: The Mux HLS stream URL (required)
+- **`maxResolution`**: Maximum resolution for the video (e.g., "720p", "1080p")
+
+
+#### Example
+
+```typescript
+<MuxBackgroundVideo
+  src="https://stream.mux.com/YOUR_PLAYBACK_ID.m3u8"
+  maxResolution="720p"
+  autoPlay
+  muted
+  loop
+  playsInline
+/>
+```
 
 ## Development
 
@@ -141,18 +189,6 @@ When running the dev server, you can use the following URL parameters:
 Example:
 ```
 http://localhost:3000/YOUR_ID?maxResolution=720p
-```
-
-## Project Structure
-
-```
-src/
-├── engines/          # Video engine implementations
-│   └── hls-mini/     # HLS video engine
-├── index.ts          # Main exports
-├── media-renderer.ts # Base media renderer
-├── mux-background-video.ts # Main class
-└── types.ts          # TypeScript definitions
 ```
 
 ## License

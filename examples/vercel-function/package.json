@@ -8,7 +8,7 @@
     "build": "esbuild src/mux-background-video.ts --bundle --minify --format=esm --outdir=dist",
     "types": "tsc",
     "start": "npm run serve --",
-    "serve": "vercel dev"
+    "serve": "(cd ../.. && vercel dev)"
   },
   "keywords": [
     "hls",

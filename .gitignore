@@ -2,3 +2,5 @@ node_modules/
 .DS_Store
 dist/
 .vercel
+
+tsconfig.tsbuildinfo

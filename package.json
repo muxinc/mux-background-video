@@ -5,6 +5,25 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./dist/*": {
+      "import": "./dist/*",
+      "default": "./dist/*"
+    },
+    "./*.js": {
+      "import": "./dist/*.js",
+      "default": "./dist/*.js"
+    },
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "import": "./dist/*.js",
+      "default": "./dist/*.js"
+    }
+  },
   "scripts": {
     "build": "npm-run-all types \"build:**\"",
     "build:esm:core": "esbuild src/index.ts --bundle --minify --format=esm --outdir=dist",
