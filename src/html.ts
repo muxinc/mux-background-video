@@ -6,7 +6,7 @@ export class MuxBackgroundVideoElement extends MuxBackgroundVideoMixin(
   MediaRendererMixin(HTMLElement)
 ) {
   static get observedAttributes() {
-    return ['src', 'max-resolution'];
+    return ['src', 'max-resolution', 'audio'];
   }
 
   constructor() {
@@ -15,8 +15,12 @@ export class MuxBackgroundVideoElement extends MuxBackgroundVideoMixin(
   }
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+    if (oldValue === newValue) return;
+
     if (name === 'src') {
       super.src = newValue;
+    } else if (name === 'audio') {
+      super.audio = !!newValue;
     } else if (name === 'max-resolution') {
       super.maxResolution = newValue;
     }
@@ -28,6 +32,14 @@ export class MuxBackgroundVideoElement extends MuxBackgroundVideoMixin(
 
   set src(value: string) {
     this.setAttribute('src', value);
+  }
+
+  get audio() {
+    return this.hasAttribute('audio');
+  }
+
+  set audio(value: boolean) {
+    this.toggleAttribute('audio', !!value);
   }
 
   get maxResolution() {

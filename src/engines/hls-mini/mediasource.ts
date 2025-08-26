@@ -7,7 +7,7 @@ type SourceBufferData = Parameters<SourceBuffer['appendBuffer']>[0];
 
 type LoadMediaOptions = {
   maxResolution?: string;
-  muted?: boolean;
+  audio?: boolean;
 };
 
 export const MIN_BUFFER_AHEAD = 5; // seconds: minimum buffer ahead to keep
@@ -52,7 +52,7 @@ export const loadMedia = (
 
 const selectRenditions = (
   renditions: Rendition[],
-  { maxResolution, muted }: LoadMediaOptions = {}
+  { maxResolution, audio = true }: LoadMediaOptions = {}
 ) => {
   const videoRenditions = renditions.filter((rendition) => !rendition.type);
 
@@ -68,7 +68,7 @@ const selectRenditions = (
       .filter(({ groupId }) => groupId === selectedVideo.audio)
       .find((audio) => audio.default === 'YES');
 
-  return selectedAudio && !muted
+  return selectedAudio && audio
     ? [selectedVideo, selectedAudio]
     : [selectedVideo];
 };

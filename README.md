@@ -1,11 +1,12 @@
 # Mux Background Video
 
-A lightweight library for creating background videos using Mux HLS streams with customizable resolution controls.
+A lightweight library for creating background videos using Mux HLS streams with customizable resolution controls and audio option.
 
 ## Features
 
 - **HLS Video Support**: Built-in HLS video engine for smooth streaming
 - **Resolution Control**: Set maximum resolution for optimal performance
+- **Audio Control**: Enable or disable audio tracks for background videos
 - **Background Video**: Perfect for hero sections, landing pages, and immersive experiences
 - **TypeScript Support**: Full TypeScript definitions included
 - **Lightweight**: Minimal bundle size with no heavy dependencies
@@ -28,31 +29,31 @@ The easiest way to use Mux Background Video is with the custom HTML element:
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Background Video</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #000;
-        }
-        
-        mux-background-video, 
-        video {
-            display: block;
-            width: 100vw;
-            height: 100vh;
-            object-fit: cover;
-        }
-    </style>
-    <script type="module" src="http://cdn.jsdelivr.net/npm/mux-background-video/html/+esm"></script>
+  <title>Background Video</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #000;
+    }
+    
+    mux-background-video, 
+    video {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+    }
+  </style>
+  <script type="module" src="http://cdn.jsdelivr.net/npm/mux-background-video/html/+esm"></script>
 </head>
 <body>
-    <mux-background-video 
-        src="https://stream.mux.com/YOUR_PLAYBACK_ID.m3u8" 
-        max-resolution="720p"
-    >
-        <video autoplay muted loop playsinline></video>
-    </mux-background-video>
+  <mux-background-video 
+    src="https://stream.mux.com/YOUR_PLAYBACK_ID.m3u8" 
+    max-resolution="720p"
+  >
+    <video autoplay muted loop playsinline></video>
+  </mux-background-video>
 </body>
 </html>
 ```
@@ -99,12 +100,13 @@ The `<mux-background-video>` element wraps a `<video>` element and automatically
 
 - **`src`**: The Mux HLS stream URL (required)
 - **`max-resolution`**: Maximum resolution for the video (e.g., "720p", "1080p")
+- **`audio`**: Enable audio track (default: false)
 
 #### HTML Structure
 
 ```html
-<mux-background-video src="YOUR_STREAM_URL" max-resolution="720p">
-    <video autoplay muted loop playsinline></video>
+<mux-background-video audio max-resolution="720p" src="YOUR_STREAM_URL">
+  <video autoplay muted loop playsinline></video>
 </mux-background-video>
 ```
 
@@ -115,15 +117,19 @@ You can also set properties programmatically:
 ```typescript
 const element = document.querySelector('mux-background-video');
 
-// Set the stream URL
-element.src = 'https://stream.mux.com/NEW_PLAYBACK_ID.m3u8';
-
 // Set maximum resolution
 element.maxResolution = '1080p';
+
+// Enable audio track
+element.audio = true;
+
+// Set the stream URL
+element.src = 'https://stream.mux.com/NEW_PLAYBACK_ID.m3u8';
 
 // Get current values
 console.log(element.src);
 console.log(element.maxResolution);
+console.log(element.audio);
 ```
 
 ### React Component: `MuxBackgroundVideo`
@@ -132,6 +138,7 @@ console.log(element.maxResolution);
 
 - **`src`**: The Mux HLS stream URL (required)
 - **`maxResolution`**: Maximum resolution for the video (e.g., "720p", "1080p")
+- **`audio`**: Enable audio track (default: false)
 
 
 #### Example
@@ -140,6 +147,7 @@ console.log(element.maxResolution);
 <MuxBackgroundVideo
   src="https://stream.mux.com/YOUR_PLAYBACK_ID.m3u8"
   maxResolution="720p"
+  audio={true}
   autoPlay
   muted
   loop
@@ -177,7 +185,6 @@ npm start
 - **`npm start`**: Start development server with watch mode
 - **`npm run build`**: Build the project
 - **`npm run watch`**: Watch for changes and rebuild
-- **`npm run serve`**: Start Vercel dev server
 
 ### Development Server
 
@@ -185,10 +192,11 @@ When running the dev server, you can use the following URL parameters:
 
 - **`playbackId`**: Set a custom Mux playback ID (defaults to demo video)
 - **`maxResolution`**: Set maximum resolution for the background video
+- **`audio`**: Enable or disable audio track (default: false)
 
 Example:
 ```
-http://localhost:3000/YOUR_ID?maxResolution=720p
+http://localhost:3000/YOUR_PLAYBACK_ID?maxResolution=720p&audio=1
 ```
 
 ## License

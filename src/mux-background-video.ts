@@ -7,12 +7,14 @@ type Constructor<T> = {
 
 export function MuxBackgroundVideoMixin<T extends Constructor<any>>(Base: T) {
   return class MuxBackgroundVideoClass extends Base {
+    #audio = false;
     #maxResolution?: string;
 
-    get config(): any {
+    get config() {
       return {
+        audio: this.audio,
+        maxResolution: this.maxResolution,
         ...super.config,
-        muted: this.display?.muted,
       };
     }
 
@@ -20,16 +22,20 @@ export function MuxBackgroundVideoMixin<T extends Constructor<any>>(Base: T) {
       super.config = config;
     }
 
+    get audio() {
+      return this.#audio;
+    }
+
+    set audio(audio: boolean) {
+      this.#audio = audio;
+    }
+
     get maxResolution() {
       return this.#maxResolution;
     }
 
-    set maxResolution(resolution: string | undefined) {
-      this.#maxResolution = resolution;
-      this.config = {
-        ...this.config,
-        maxResolution: resolution,
-      };
+    set maxResolution(maxResolution: string | undefined) {
+      this.#maxResolution = maxResolution;
     }
   };
 }

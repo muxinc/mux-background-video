@@ -1,7 +1,7 @@
 {
   "name": "mux-background-video",
   "version": "0.0.1",
-  "description": "",
+  "description": "A lightweight library for creating background videos using Mux HLS streams with customizable resolution controls and audio options",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/types/index.d.ts",

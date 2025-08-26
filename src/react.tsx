@@ -6,6 +6,7 @@ import { MuxBackgroundVideo as MuxBackgroundVideoCore } from './mux-background-v
 export interface MuxBackgroundVideoProps {
   src: string;
   muted?: boolean;
+  audio?: boolean;
   maxResolution?: string;
   className?: string;
   style?: React.CSSProperties;
@@ -17,7 +18,7 @@ export interface MuxBackgroundVideoRef {
 }
 
 export const MuxBackgroundVideo = forwardRef<MuxBackgroundVideoRef, MuxBackgroundVideoProps>(
-  ({ src, muted = true, maxResolution, className, style, ...props }, ref) => {
+  ({ src, audio = false, maxResolution, className, style, ...props }, ref) => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const muxRef = useRef<InstanceType<typeof MuxBackgroundVideoCore> | null>(null);
 
@@ -30,7 +31,7 @@ export const MuxBackgroundVideo = forwardRef<MuxBackgroundVideoRef, MuxBackgroun
       muxRef.current.display = videoElement;
       muxRef.current.src = src;
       muxRef.current.config = {
-        muted,
+        audio,
         ...(maxResolution && { maxResolution })
       };
 
@@ -40,7 +41,7 @@ export const MuxBackgroundVideo = forwardRef<MuxBackgroundVideoRef, MuxBackgroun
           muxRef.current = null;
         }
       };
-    }, [src, muted, maxResolution]);
+    }, [src, audio, maxResolution]);
 
     // Expose methods via ref
     useImperativeHandle(ref, () => ({
@@ -53,7 +54,6 @@ export const MuxBackgroundVideo = forwardRef<MuxBackgroundVideoRef, MuxBackgroun
         ref={videoRef}
         className={className}
         style={style}
-        muted={muted}
         playsInline
         autoPlay
         loop

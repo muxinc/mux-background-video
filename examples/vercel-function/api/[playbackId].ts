@@ -62,7 +62,7 @@ function getBackgroundVideoAttributes(req: Request) {
   const defaultPlaybackId = 'crDG1Lz1004PuNKSqiw02PFumJlY7nx500v5M02RXdD36hg';
   const playbackId = searchParams.get('playbackId') || defaultPlaybackId;
 
-  return getAttributes(req, ['src', 'max-resolution'], {
+  return getAttributes(req, ['src', 'audio', 'max-resolution'], {
     src: `https://stream.mux.com/${playbackId}.m3u8`,
   });
 }

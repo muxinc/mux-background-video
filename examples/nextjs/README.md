@@ -67,6 +67,7 @@ export default function MyPage() {
         <BackgroundVideo
           playbackId="YOUR_MUX_PLAYBACK_ID"
           maxResolution="720p"
+          audio={false}
         />
         <div className="absolute inset-0 bg-black bg-opacity-50" />
       </div>
@@ -87,6 +88,7 @@ The `BackgroundVideo` component accepts the following props:
 |------|------|---------|-------------|
 | `playbackId` | `string` | **Required** | Your Mux playback ID |
 | `maxResolution` | `'360p' \| '480p' \| '720p' \| '1080p' \| '1440p' \| '2160p'` | `'720p'` | Maximum video resolution |
+| `audio` | `boolean` | `true` | Enable or disable audio track |
 | `className` | `string` | `''` | Additional CSS classes |
 | `autoplay` | `boolean` | `true` | Auto-play the video |
 | `muted` | `boolean` | `true` | Mute the video |
