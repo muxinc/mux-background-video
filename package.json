@@ -31,8 +31,7 @@
     "build:esm:html": "esbuild src/html.ts --bundle --minify --format=esm --outdir=dist",
     "types": "tsc",
     "watch": "run-p \"types -- -w\" \"build:** -- --watch=forever\"",
-    "start": "run-p watch serve",
-    "serve": "vercel dev",
+    "start": "(cd examples/vercel-function && npm run start)",
     "test": "web-test-runner"
   },
   "keywords": [

@@ -6,8 +6,7 @@
   "main": "dist/mux-background-video.js",
   "scripts": {
     "build": "esbuild src/mux-background-video.ts --bundle --minify --format=esm --outdir=dist",
-    "types": "tsc",
-    "watch": "run-p \"types -- -w\" \"build -- --watch=forever\"",
+    "watch": "run-p \"build -- --watch=forever\"",
     "start": "run-p watch serve",
     "serve": "(cd ../.. && vercel dev)"
   },
