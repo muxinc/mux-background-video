@@ -1,6 +1,6 @@
 import type { IMediaDisplay, IMediaEngine } from './types.js';
 // Use the HlsMini engine by default.
-import { HlsMini } from './engines/hls-mini/index.js';
+import { HlsMini, HlsMiniConfig } from './engines/hls-mini/index.js';
 
 type Constructor<T> = {
   new (...args: any[]): T;
@@ -12,9 +12,9 @@ export function MediaRendererMixin<T extends Constructor<EventTarget>>(
 ) {
   return class MediaRendererClass extends Base {
     #display?: IMediaDisplay;
-    #engine?: IMediaEngine<Record<string, any>>;
+    #engine?: IMediaEngine<HlsMiniConfig>;
     #src = '';
-    #config?: Record<string, any>;
+    #config?: HlsMiniConfig;
     #loadRequested?: Promise<void> | null;
 
     get display() {
@@ -35,11 +35,11 @@ export function MediaRendererMixin<T extends Constructor<EventTarget>>(
       return this.#src;
     }
 
-    get config(): Record<string, any> | undefined {
+    get config(): HlsMiniConfig | undefined {
       return this.#config;
     }
 
-    set config(config: Record<string, any>) {
+    set config(config: HlsMiniConfig) {
       this.#config = config;
       this.#requestLoad();
     }
@@ -53,9 +53,7 @@ export function MediaRendererMixin<T extends Constructor<EventTarget>>(
 
     load() {
       if (!this.#engine) {
-        this.#engine = new HlsMini() as unknown as IMediaEngine<
-          Record<string, any>
-        >;
+        this.#engine = new HlsMini() as unknown as IMediaEngine<HlsMiniConfig>;
       }
       if (this.display) {
         this.#engine.attachMedia(this.display);
@@ -71,3 +69,4 @@ export function MediaRendererMixin<T extends Constructor<EventTarget>>(
 }
 
 export const MediaRenderer = MediaRendererMixin(EventTarget);
+export type MediaRenderer = InstanceType<typeof MediaRenderer>;
