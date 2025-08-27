@@ -1,16 +1,6 @@
-import { IMediaDisplay } from '../../types.js';
-
 export type HlsMiniConfig = {
+  audio?: boolean;
   maxResolution?: string;
-};
-
-export type HlsMiniState = {
-  src: string;
-  mediaDisplay?: IMediaDisplay;
-  mediaSourceUrl?: string;
-  mediaSource?: MediaSource;
-  audio?: any;
-  video?: any;
 };
 
 type BaseRendition = {

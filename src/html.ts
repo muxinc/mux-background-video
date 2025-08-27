@@ -19,10 +19,11 @@ export class MuxBackgroundVideoElement extends MuxBackgroundVideoMixin(
 
     if (name === 'src') {
       super.src = newValue;
-    } else if (name === 'audio') {
-      super.audio = !!newValue;
-    } else if (name === 'max-resolution') {
-      super.maxResolution = newValue;
+    } else {
+      super.config = {
+        audio: this.audio,
+        maxResolution: this.maxResolution,
+      };
     }
   }
 

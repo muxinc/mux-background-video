@@ -32,20 +32,22 @@ export const loadMedia = (
     abortController.abort('unload');
   };
 
-  getMultivariantPlaylist(uri, signal).then(async ({ renditions }) => {
-    const selected = selectRenditions(renditions, options);
-    const mediaPlaylists = await Promise.all(
-      selected.map((playlist) => getMediaPlaylist(playlist, signal))
-    );
+  getMultivariantPlaylist(uri, signal)
+    .then(async ({ renditions }) => {
+      const selected = selectRenditions(renditions, options);
+      const mediaPlaylists = await Promise.all(
+        selected.map((playlist) => getMediaPlaylist(playlist, signal))
+      );
 
-    if (signal.aborted) return;
+      if (signal.aborted) return;
 
-    const mediaSource = await initMediaSource(mediaPlaylists, mediaEl);
-    initLoadSegments(mediaPlaylists, mediaSource, mediaEl, signal);
-  }).catch((error) => {
-    if (error === 'unload') return;
-    throw error;
-  });
+      const mediaSource = await initMediaSource(mediaPlaylists, mediaEl);
+      initLoadSegments(mediaPlaylists, mediaSource, mediaEl, signal);
+    })
+    .catch((error) => {
+      if (error === 'unload') return;
+      throw error;
+    });
 
   return unload;
 };
@@ -156,7 +158,11 @@ const initLoadSegments = (
               for await (const chunk of segmentChunks) {
                 try {
                   // The buffer eviction algorithm auto runs when appending a segment.
-                  await appendSegment(mediaSource, sourceBuffer, new Uint8Array(chunk));
+                  await appendSegment(
+                    mediaSource,
+                    sourceBuffer,
+                    new Uint8Array(chunk)
+                  );
                 } catch (error: any) {
                   // If it was unable to evict enough data to accommodate the append
                   // or the append is too big, we need to manually evict the buffer.
@@ -164,7 +170,11 @@ const initLoadSegments = (
                   if (error?.name === 'QuotaExceededError') {
                     await evictBuffer(sourceBuffer, mediaEl.currentTime);
                     // Retry once after eviction
-                    await appendSegment(mediaSource, sourceBuffer, new Uint8Array(chunk));
+                    await appendSegment(
+                      mediaSource,
+                      sourceBuffer,
+                      new Uint8Array(chunk)
+                    );
                   } else {
                     throw error;
                   }

@@ -26,14 +26,12 @@ export const MuxBackgroundVideo = forwardRef<MuxBackgroundVideoRef, MuxBackgroun
       if (!videoRef.current) return;
 
       muxRef.current ??= new MuxBackgroundVideoCore();
-      
-      const videoElement = videoRef.current;
-      muxRef.current.display = videoElement;
-      muxRef.current.src = src;
+      muxRef.current.display = videoRef.current;
       muxRef.current.config = {
         audio,
-        ...(maxResolution && { maxResolution })
+        maxResolution,
       };
+      muxRef.current.src = src;
 
       return () => {
         if (muxRef.current) {
@@ -45,8 +43,8 @@ export const MuxBackgroundVideo = forwardRef<MuxBackgroundVideoRef, MuxBackgroun
 
     // Expose methods via ref
     useImperativeHandle(ref, () => ({
-      play: () => muxRef.current?.play(),
-      pause: () => muxRef.current?.pause(),
+      play: () => videoRef.current?.play(),
+      pause: () => videoRef.current?.pause(),
     }), []);
 
     return (

@@ -7,35 +7,17 @@ type Constructor<T> = {
 
 export function MuxBackgroundVideoMixin<T extends Constructor<any>>(Base: T) {
   return class MuxBackgroundVideoClass extends Base {
-    #audio = false;
-    #maxResolution?: string;
-
     get config() {
       return {
-        audio: this.audio,
-        maxResolution: this.maxResolution,
+        // Default to audio off for background video,
+        // the standalone HLS engine defaults to audio on.
+        audio: false,
         ...super.config,
       };
     }
 
     set config(config: any) {
       super.config = config;
-    }
-
-    get audio() {
-      return this.#audio;
-    }
-
-    set audio(audio: boolean) {
-      this.#audio = audio;
-    }
-
-    get maxResolution() {
-      return this.#maxResolution;
-    }
-
-    set maxResolution(maxResolution: string | undefined) {
-      this.#maxResolution = maxResolution;
     }
   };
 }

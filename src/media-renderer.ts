@@ -67,14 +67,6 @@ export function MediaRendererMixin<T extends Constructor<EventTarget>>(
         this.#engine.src = this.src;
       }
     }
-
-    play() {
-      this.#display?.play();
-    }
-
-    pause() {
-      this.#display?.pause();
-    }
   };
 }
 
