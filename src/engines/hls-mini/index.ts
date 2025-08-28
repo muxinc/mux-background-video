@@ -1,47 +1,43 @@
 import { IMediaDisplay, IMediaEngine } from '../../types.js';
-import { loadMedia } from './mediasource.js';
+import { MIN_BUFFER_AHEAD, loadMedia } from './mediasource.js';
 import { HlsMiniConfig } from './types.js';
 export * from './types.js';
 
+const defaultConfig: HlsMiniConfig = {
+  // Maximum buffer length in seconds. If buffer length is/becomes less than this value, a new fragment will be loaded.
+  maxBufferLength: MIN_BUFFER_AHEAD,
+  // Whether to load audio tracks.
+  audio: true,
+};
+
 export class HlsMini implements IMediaEngine<HlsMiniConfig> {
+  static DefaultConfig = defaultConfig;
+
   #mediaDisplay: IMediaDisplay | null = null;
-  #src = '';
-  #config: HlsMiniConfig = {};
+  #src: string | null = null;
+  #config: HlsMiniConfig = { ...HlsMini.DefaultConfig };
   #unloadMedia?: () => void;
-
-  get src() {
-    return this.#src;
-  }
-
-  set src(src: string) {
-    this.#src = src;
-    this.load();
-  }
 
   get config() {
     return this.#config;
   }
 
   set config(config: HlsMiniConfig) {
-    this.#config = config;
+    this.#config = { ...HlsMini.DefaultConfig, ...config };
   }
 
   attachMedia(mediaDisplay: IMediaDisplay) {
     this.#mediaDisplay = mediaDisplay;
   }
 
-  load() {
+  loadSource(src: string) {
+    this.#src = src;
+
     if (this.#mediaDisplay) {
       console.log('load', this.#src, this.config);
       this.#unloadMedia?.();
 
-      if (this.src) {
-        this.#unloadMedia = loadMedia(
-          this.src,
-          this.#mediaDisplay,
-          this.config
-        );
-      }
+      this.#unloadMedia = loadMedia(this.#src, this.#mediaDisplay, this.config);
     }
   }
 }

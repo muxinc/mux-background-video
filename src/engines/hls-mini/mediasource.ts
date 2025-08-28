@@ -1,14 +1,9 @@
 import { getMultivariantPlaylist, getMediaPlaylist } from './playlists.js';
 import type { IMediaDisplay } from '../../types.js';
-import type { Rendition, Segment } from './types.js';
+import type { HlsMiniConfig, Rendition, Segment } from './types.js';
 import { ChunkedStreamIterable } from './chunked-stream-iterable.js';
 
 type SourceBufferData = Parameters<SourceBuffer['appendBuffer']>[0];
-
-type LoadMediaOptions = {
-  maxResolution?: string;
-  audio?: boolean;
-};
 
 export const MIN_BUFFER_AHEAD = 15; // seconds: minimum buffer ahead to keep
 export const BACK_BUFFER_TARGET = 5; // seconds of back buffer to keep when evicting
@@ -17,7 +12,7 @@ export const GAP_TOLERANCE = 0.25; // seconds: treat tiny gaps between ranges as
 export const loadMedia = (
   uri: string,
   mediaEl: IMediaDisplay,
-  options: LoadMediaOptions = {}
+  config: HlsMiniConfig
 ) => {
   if (!uri) return;
 
@@ -34,7 +29,7 @@ export const loadMedia = (
 
   getMultivariantPlaylist(uri, signal)
     .then(async ({ renditions }) => {
-      const selected = selectRenditions(renditions, options);
+      const selected = selectRenditions(renditions, config);
       const mediaPlaylists = await Promise.all(
         selected.map((playlist) => getMediaPlaylist(playlist, signal))
       );
@@ -42,7 +37,7 @@ export const loadMedia = (
       if (signal.aborted) return;
 
       const mediaSource = await initMediaSource(mediaPlaylists, mediaEl);
-      initLoadSegments(mediaPlaylists, mediaSource, mediaEl, signal);
+      initLoadSegments(mediaPlaylists, mediaSource, mediaEl, config, signal);
     })
     .catch((error) => {
       if (error === 'unload') return;
@@ -54,7 +49,7 @@ export const loadMedia = (
 
 const selectRenditions = (
   renditions: Rendition[],
-  { maxResolution, audio = true }: LoadMediaOptions = {}
+  { maxResolution, audio }: HlsMiniConfig
 ) => {
   const videoRenditions = renditions.filter((rendition) => !rendition.type);
 
@@ -117,10 +112,12 @@ const initLoadSegments = (
   mediaPlaylists: Rendition[],
   mediaSource: MediaSource,
   mediaEl: IMediaDisplay,
+  config: HlsMiniConfig,
   signal: AbortSignal
 ) => {
   let isLoading = false;
   let checkInterval: NodeJS.Timeout;
+  let initSegments = getInitSegments(mediaPlaylists);
 
   const loadNextSegments = async () => {
     if (signal.aborted) {
@@ -138,11 +135,15 @@ const initLoadSegments = (
           const sourceBuffer = mediaSource.sourceBuffers[index];
           const segments = playlist.segments;
 
-          const segmentsToLoad = getSegmentsToLoad(
-            segments,
-            sourceBuffer.buffered,
-            mediaEl.currentTime
-          );
+          const segmentsToLoad = [
+            ...initSegments,
+            ...getSegmentsToLoad(
+              segments,
+              sourceBuffer.buffered,
+              mediaEl.currentTime,
+              config
+            ),
+          ];
 
           for (const segment of segmentsToLoad) {
             const segUrl = new URL(segment.uri!);
@@ -163,6 +164,10 @@ const initLoadSegments = (
                     sourceBuffer,
                     new Uint8Array(chunk)
                   );
+                  // If the init segment is loaded, remove it from the set.
+                  if (segment.duration === 0) {
+                    initSegments.delete(segment);
+                  }
                 } catch (error: any) {
                   // If it was unable to evict enough data to accommodate the append
                   // or the append is too big, we need to manually evict the buffer.
@@ -217,27 +222,27 @@ const checkEndOfStream = (mediaSource: MediaSource, mediaDuration: number) => {
   }
 };
 
+const getInitSegments = (mediaPlaylists: Rendition[]) => {
+  const initSegments = new Set<Segment>();
+  for (const { segments } of mediaPlaylists) {
+    const initSeg = segments?.find((s) => (s.duration || 0) === 0 && !!s.uri);
+    if (initSeg) initSegments.add(initSeg);
+  }
+  return initSegments;
+};
+
 // Decide which segments to load next to ensure at least MIN_BUFFER_AHEAD seconds
 // are available ahead of the current playback position.
 export const getSegmentsToLoad = (
   segments: Segment[] = [],
   buffered: TimeRanges,
-  currentTime: number
+  currentTime: number,
+  config: HlsMiniConfig
 ) => {
-  const toLoad: Segment[] = [];
-  const addedUris = new Set<string>();
-
-  // If nothing buffered yet and there is an init segment (duration 0), enqueue it first
-  if (buffered.length === 0) {
-    const initSeg = segments.find((s) => (s.duration || 0) === 0 && !!s.uri);
-    if (initSeg && initSeg.uri && !addedUris.has(initSeg.uri)) {
-      toLoad.push(initSeg);
-      addedUris.add(initSeg.uri);
-    }
-  }
-
+  const toLoad = new Set<Segment>();
   const bufferedEnd = getContiguousBufferedEnd(buffered, currentTime);
-  const targetBufferedEnd = currentTime + MIN_BUFFER_AHEAD;
+  const targetBufferedEnd =
+    currentTime + (config.maxBufferLength ?? MIN_BUFFER_AHEAD);
 
   if (bufferedEnd >= targetBufferedEnd) {
     return toLoad;
@@ -256,10 +261,7 @@ export const getSegmentsToLoad = (
     if (segEnd <= bufferedEnd) continue; // already behind our starting point
     if (isRangeInBuffered(segStart, segEnd, buffered)) continue;
 
-    if (seg.uri && !addedUris.has(seg.uri)) {
-      toLoad.push(seg);
-      addedUris.add(seg.uri);
-    }
+    if (seg.uri && !toLoad.has(seg)) toLoad.add(seg);
 
     if (segEnd >= targetBufferedEnd) break;
   }

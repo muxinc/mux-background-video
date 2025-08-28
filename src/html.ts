@@ -1,12 +1,13 @@
-import { MediaRendererMixin } from './media-renderer.js';
 import { MuxBackgroundVideoMixin } from './mux-background-video.js';
 import { IMediaDisplay } from './types.js';
 
+type Preload = 'none' | 'metadata' | 'auto';
+
 export class MuxBackgroundVideoElement extends MuxBackgroundVideoMixin(
-  MediaRendererMixin(HTMLElement)
+  HTMLElement
 ) {
   static get observedAttributes() {
-    return ['src', 'max-resolution', 'audio'];
+    return ['src', 'audio', 'max-resolution', 'preload'];
   }
 
   constructor() {
@@ -23,6 +24,7 @@ export class MuxBackgroundVideoElement extends MuxBackgroundVideoMixin(
       super.config = {
         audio: this.audio,
         maxResolution: this.maxResolution,
+        preload: this.preload,
       };
     }
   }
@@ -52,6 +54,18 @@ export class MuxBackgroundVideoElement extends MuxBackgroundVideoMixin(
       this.setAttribute('max-resolution', value);
     } else {
       this.removeAttribute('max-resolution');
+    }
+  }
+
+  get preload() {
+    return this.getAttribute('preload') as Preload | undefined;
+  }
+
+  set preload(value: Preload | undefined) {
+    if (value) {
+      this.setAttribute('preload', value);
+    } else {
+      this.removeAttribute('preload');
     }
   }
 }
