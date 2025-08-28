@@ -10,8 +10,8 @@ type LoadMediaOptions = {
   audio?: boolean;
 };
 
-export const MIN_BUFFER_AHEAD = 5; // seconds: minimum buffer ahead to keep
-export const BACK_BUFFER_TARGET = 10; // seconds of back buffer to keep when evicting
+export const MIN_BUFFER_AHEAD = 15; // seconds: minimum buffer ahead to keep
+export const BACK_BUFFER_TARGET = 5; // seconds of back buffer to keep when evicting
 export const GAP_TOLERANCE = 0.25; // seconds: treat tiny gaps between ranges as contiguous
 
 export const loadMedia = (
