@@ -1,3 +1,8 @@
+export type Constructor<T> = {
+  new (...args: any[]): T;
+  prototype: T;
+};
+
 type PartialMediaInterface = Pick<
   HTMLMediaElement, 
   'play' | 'pause' | 'currentTime' | 'buffered'

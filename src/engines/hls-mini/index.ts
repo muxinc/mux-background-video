@@ -34,7 +34,14 @@ export class HlsMini implements IMediaEngine<HlsMiniConfig> {
     if (this.#mediaDisplay) {
       console.log('load', this.#src, this.config);
       this.#unloadMedia?.();
-      this.#unloadMedia = loadMedia(this.src, this.#mediaDisplay, this.config);
+
+      if (this.src) {
+        this.#unloadMedia = loadMedia(
+          this.src,
+          this.#mediaDisplay,
+          this.config
+        );
+      }
     }
   }
 }

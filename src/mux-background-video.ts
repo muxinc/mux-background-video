@@ -1,13 +1,10 @@
-import { MediaRenderer } from './media-renderer.js';
+import { MediaRendererMixin } from './media-renderer.js';
+import { HlsMini, HlsMiniConfig } from './engines/hls-mini/index.js';
+import type { Constructor } from './types.js';
 
-type Constructor<T> = {
-  new (...args: any[]): T;
-  prototype: T;
-};
-
-export function MuxBackgroundVideoMixin<T extends Constructor<any>>(Base: T) {
-  return class MuxBackgroundVideoClass extends Base {
-    get config(): MediaRenderer['config'] {
+export function MuxBackgroundVideoMixin<T extends Constructor<EventTarget>>(Base: T) {
+  return class MuxBackgroundVideoClass extends MediaRendererMixin(Base, HlsMini) {
+    get config(): HlsMiniConfig {
       return {
         // Default to audio off for background video,
         // the standalone HLS engine defaults to audio on.
@@ -22,5 +19,5 @@ export function MuxBackgroundVideoMixin<T extends Constructor<any>>(Base: T) {
   };
 }
 
-export const MuxBackgroundVideo = MuxBackgroundVideoMixin(MediaRenderer);
+export const MuxBackgroundVideo = MuxBackgroundVideoMixin(EventTarget);
 export type MuxBackgroundVideo = InstanceType<typeof MuxBackgroundVideo>;
