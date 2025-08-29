@@ -48,12 +48,12 @@ export function MediaRendererMixin<
       return this.#src;
     }
 
-    get config(): C | undefined {
+    get config(): C {
       return this.#config;
     }
 
     set config(config: C) {
-      this.#config = config;
+      this.#config = config ?? {};
       this.#requestLoad();
     }
 

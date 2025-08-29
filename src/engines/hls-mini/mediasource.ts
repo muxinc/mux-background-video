@@ -133,17 +133,17 @@ const initLoadSegments = (
       await Promise.all(
         mediaPlaylists.map(async (playlist, index) => {
           const sourceBuffer = mediaSource.sourceBuffers[index];
+          const initSegment = [...initSegments][index];
           const segments = playlist.segments;
-
-          const segmentsToLoad = [
-            ...initSegments,
+          const segmentsToLoad = initSegment ? [initSegment] : [];
+          segmentsToLoad.push(
             ...getSegmentsToLoad(
               segments,
               sourceBuffer.buffered,
               mediaEl.currentTime,
               config
-            ),
-          ];
+            )
+          );
 
           for (const segment of segmentsToLoad) {
             const segUrl = new URL(segment.uri!);
@@ -159,11 +159,7 @@ const initLoadSegments = (
               for await (const chunk of segmentChunks) {
                 try {
                   // The buffer eviction algorithm auto runs when appending a segment.
-                  await appendSegment(
-                    mediaSource,
-                    sourceBuffer,
-                    new Uint8Array(chunk)
-                  );
+                  await appendSegment(mediaSource, sourceBuffer, chunk);
                   // If the init segment is loaded, remove it from the set.
                   if (segment.duration === 0) {
                     initSegments.delete(segment);
@@ -175,11 +171,7 @@ const initLoadSegments = (
                   if (error?.name === 'QuotaExceededError') {
                     await evictBuffer(sourceBuffer, mediaEl.currentTime);
                     // Retry once after eviction
-                    await appendSegment(
-                      mediaSource,
-                      sourceBuffer,
-                      new Uint8Array(chunk)
-                    );
+                    await appendSegment(mediaSource, sourceBuffer, chunk);
                   } else {
                     throw error;
                   }
@@ -329,7 +321,7 @@ const fetchSegmentChunks = async (uri: string) => {
 const appendSegment = async (
   mediaSource: MediaSource,
   sourceBuffer: SourceBuffer,
-  segmentData: SourceBufferData
+  segmentData: Uint8Array
 ) => {
   if (sourceBuffer.updating) await eventToPromise(sourceBuffer, 'updateend');
 
@@ -338,7 +330,7 @@ const appendSegment = async (
   if (mediaSource.readyState === 'closed') return;
 
   const promise = eventToPromise(sourceBuffer, 'updateend');
-  sourceBuffer.appendBuffer(segmentData);
+  sourceBuffer.appendBuffer(segmentData as SourceBufferData);
   return promise;
 };
 

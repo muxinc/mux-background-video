@@ -10,18 +10,21 @@ const defaultConfig: MuxBackgroundVideoConfig = {
   audio: false,
 };
 
-export function MuxBackgroundVideoMixin<T extends Constructor<EventTarget>>(Base: T) {
-  return class MuxBackgroundVideoClass extends MediaRendererMixin(Base, HlsMini) {
-
+export function MuxBackgroundVideoMixin<T extends Constructor<EventTarget>>(
+  Base: T
+) {
+  return class MuxBackgroundVideoClass extends MediaRendererMixin(
+    Base,
+    HlsMini
+  ) {
     get config() {
-      return super.config as MuxBackgroundVideoConfig;
+      // This might look strange but we want to return the same object so
+      // it's mutable and the set values should override the default values.
+      return Object.assign(super.config, { ...defaultConfig, ...super.config });
     }
 
     set config(config) {
-      super.config = {
-        ...defaultConfig,
-        ...config,
-      };
+      super.config = config;
     }
   };
 }
