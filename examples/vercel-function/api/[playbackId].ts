@@ -20,7 +20,7 @@ function getHtml(req: Request) {
           background-color: #000;
         }
 
-        mux-background-video, 
+        mux-background-video,
         video {
           display: block;
           width: 100%;
@@ -28,14 +28,44 @@ function getHtml(req: Request) {
           object-fit: cover;
         }
       </style>
+      <script defer src="https://cdn.jsdelivr.net/npm/mux-embed"></script>
+      <script type="module" src="./dist/mux-background-video.js"></script>
     </head>
     <body>
+      <mux-background-video ${getBackgroundVideoAttributes(req)}>
+        <video id="video" ${getVideoAttributes(req)}></video>
+      </mux-background-video>
+
       <script type="module">
-        import { MuxBackgroundVideoElement } from './dist/mux-background-video.js';
+        if (typeof mux !== 'undefined') {
+          const player_init_time =
+            performance.timeOrigin ??
+            performance.timing?.navigationStart ??
+            performance.now();
+
+          mux.monitor('#video', {
+            debug: ${getParam(req, 'debug')},
+            data: {
+              video_id: '${getPlaybackId(req)}',
+              video_title: 'Mux Background Video Demo',
+              video_stream_type: 'on-demand',
+              player_name: 'mux-background-video',
+              player_version: '0.0.1',
+              player_init_time,
+            },
+          });
+          // Add Mux video source url to state data so env_key can be inferred.
+          mux.setStateDataTranslator('#video', (state) => {
+            return {
+              ...state,
+              video_source_url: '${getSourceUrl(req)}',
+            };
+          });
+        }
 
         const video = document.querySelector('#video');
         video.addEventListener('error', () => {
-          console.log(video.error)
+          console.log(video.error);
         });
         video.addEventListener('loadedmetadata', () => {
           console.log('loadedmetadata', video.duration);
@@ -50,20 +80,23 @@ function getHtml(req: Request) {
           console.log('canplaythrough');
         });
       </script>
-      <mux-background-video ${getBackgroundVideoAttributes(req)}>
-        <video id="video" ${getVideoAttributes(req)}></video>
-      </mux-background-video>
     </body>
   </html>`;
 }
 
-function getBackgroundVideoAttributes(req: Request) {
+function getPlaybackId(req: Request) {
   const searchParams = new URL(req.url).searchParams;
   const defaultPlaybackId = 'crDG1Lz1004PuNKSqiw02PFumJlY7nx500v5M02RXdD36hg';
-  const playbackId = searchParams.get('playbackId') || defaultPlaybackId;
+  return searchParams.get('playbackId') || defaultPlaybackId;
+}
 
+function getSourceUrl(req: Request) {
+  return `https://stream.mux.com/${getPlaybackId(req)}.m3u8`;
+}
+
+function getBackgroundVideoAttributes(req: Request) {
   return getAttributes(req, ['src', 'audio', 'max-resolution', 'preload'], {
-    src: `https://stream.mux.com/${playbackId}.m3u8`,
+    src: getSourceUrl(req),
   });
 }
 
@@ -93,7 +126,11 @@ function getVideoAttributes(req: Request) {
   return getAttributes(req, allowedAttributes, attributes);
 }
 
-function getAttributes(req: Request, allowedAttributes: string[], defaultAttributes: Record<string, any>) {
+function getAttributes(
+  req: Request,
+  allowedAttributes: string[],
+  defaultAttributes: Record<string, any> = {}
+) {
   const searchParams = new URL(req.url).searchParams;
   const attributes: Record<string, any> = { ...defaultAttributes };
 
@@ -109,4 +146,9 @@ function getAttributes(req: Request, allowedAttributes: string[], defaultAttribu
   }
 
   return attrs(attributes);
+}
+
+function getParam(req: Request, param: string) {
+  const searchParams = new URL(req.url).searchParams;
+  return searchParams.get(param) === 'true' || searchParams.get(param) === '1';
 }
