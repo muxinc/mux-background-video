@@ -48,11 +48,7 @@ The easiest way to use Mux Background Video is with the custom HTML element:
   <script type="module" src="http://cdn.jsdelivr.net/npm/mux-background-video/html/+esm"></script>
 </head>
 <body>
-  <mux-background-video 
-    src="https://stream.mux.com/YOUR_PLAYBACK_ID.m3u8" 
-    max-resolution="720p"
-    preload="metadata"
-  >
+  <mux-background-video src="https://stream.mux.com/YOUR_PLAYBACK_ID.m3u8">
     <video autoplay muted loop playsinline></video>
   </mux-background-video>
 </body>
@@ -79,14 +75,7 @@ import { MuxBackgroundVideo } from 'mux-background-video/react';
 
 function HeroSection() {
   return (
-    <MuxBackgroundVideo
-      src="https://stream.mux.com/YOUR_PLAYBACK_ID.m3u8"
-      maxResolution="720p"
-      autoPlay 
-      muted 
-      loop 
-      playsInline
-    />
+    <MuxBackgroundVideo src="https://stream.mux.com/YOUR_PLAYBACK_ID.m3u8" />
   );
 }
 ```
@@ -161,11 +150,6 @@ console.log(element.preload);
   src="https://stream.mux.com/YOUR_PLAYBACK_ID.m3u8"
   maxResolution="720p"
   audio={true}
-  preload="metadata"
-  autoPlay
-  muted
-  loop
-  playsInline
 />
 ```
 
