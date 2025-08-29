@@ -38,35 +38,11 @@ function getHtml(req: Request) {
 
       <script type="module">
         const { video } = document.querySelector('mux-background-video');
-
-        if (typeof mux !== 'undefined') {
-          const player_init_time =
-            performance.timeOrigin ??
-            performance.timing?.navigationStart ??
-            performance.now();
-
-          mux.monitor(video, {
-            debug: ${getBooleanParam(req, 'debug')},
-            data: {
-              video_id: ${safeJsVar(getPlaybackId(req))},
-              video_title: 'Mux Background Video Demo',
-              video_stream_type: 'on-demand',
-              player_name: 'mux-background-video',
-              player_version: '0.0.1',
-              player_init_time,
-            },
-          });
-          // Add Mux video source url to state data so env_key can be inferred.
-          mux.setStateDataTranslator(video, (state) => {
-            return {
-              ...state,
-              video_source_url: ${safeJsVar(getSourceUrl(req))},
-            };
-          });
-        }
-
         video.addEventListener('error', () => {
           console.log(video.error);
+        });
+        video.addEventListener('loadstart', () => {
+          console.log('loadstart', video.currentSrc);
         });
         video.addEventListener('loadedmetadata', () => {
           console.log('loadedmetadata', video.duration);

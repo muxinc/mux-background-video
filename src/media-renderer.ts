@@ -11,6 +11,7 @@ export type MediaRendererConfig = {
   audio?: boolean;
   maxResolution?: string;
   preload?: Preload;
+  debug?: boolean;
 };
 
 export type MediaRendererEngineConfig = {
