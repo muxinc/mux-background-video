@@ -32,18 +32,20 @@ function getHtml(req: Request) {
       <script type="module" src="./dist/mux-background-video.js"></script>
     </head>
     <body>
-      <mux-background-video ${getBackgroundVideoAttributes(req)}>
-        <video id="video" ${getVideoAttributes(req)}></video>
-      </mux-background-video>
+      <mux-background-video
+        ${getBackgroundVideoAttributes(req)}
+      ></mux-background-video>
 
       <script type="module">
+        const { video } = document.querySelector('mux-background-video');
+
         if (typeof mux !== 'undefined') {
           const player_init_time =
             performance.timeOrigin ??
             performance.timing?.navigationStart ??
             performance.now();
 
-          mux.monitor('#video', {
+          mux.monitor(video, {
             debug: ${getBooleanParam(req, 'debug')},
             data: {
               video_id: ${safeJsVar(getPlaybackId(req))},
@@ -55,7 +57,7 @@ function getHtml(req: Request) {
             },
           });
           // Add Mux video source url to state data so env_key can be inferred.
-          mux.setStateDataTranslator('#video', (state) => {
+          mux.setStateDataTranslator(video, (state) => {
             return {
               ...state,
               video_source_url: ${safeJsVar(getSourceUrl(req))},
@@ -63,7 +65,6 @@ function getHtml(req: Request) {
           });
         }
 
-        const video = document.querySelector('#video');
         video.addEventListener('error', () => {
           console.log(video.error);
         });
@@ -95,32 +96,20 @@ function getSourceUrl(req: Request) {
 }
 
 function getBackgroundVideoAttributes(req: Request) {
-  return getAttributes(req, ['src', 'audio', 'max-resolution', 'preload'], {
-    src: getSourceUrl(req),
-  });
-}
-
-function getVideoAttributes(req: Request) {
   const allowedAttributes = [
-    'autopictureinpicture',
-    'disablepictureinpicture',
-    'disableremoteplayback',
-    'autoplay',
-    'controls',
-    'controlslist',
-    'crossorigin',
-    'loop',
-    'muted',
-    'playsinline',
-    'poster',
+    'audio',
+    'max-resolution',
+    'debug',
+    'src',
     'preload',
+    'controls',
+    'nomuted',
+    'noloop',
+    'noautoplay',
   ];
 
   const attributes: Record<string, any> = {
-    autoplay: '',
-    muted: '',
-    loop: '',
-    playsinline: '',
+    src: getSourceUrl(req),
   };
 
   return getAttributes(req, allowedAttributes, attributes);
@@ -136,7 +125,7 @@ function getAttributes(
 
   for (const attr of allowedAttributes) {
     const value = searchParams.get(attr);
-    if (value === 'true' || value === '1') {
+    if (value === '' || value === 'true' || value === '1') {
       attributes[attr] = '';
     } else if (value === 'false' || value === '0') {
       delete attributes[attr];
@@ -150,5 +139,6 @@ function getAttributes(
 
 function getBooleanParam(req: Request, param: string) {
   const searchParams = new URL(req.url).searchParams;
-  return searchParams.get(param) === 'true' || searchParams.get(param) === '1';
+  const value = searchParams.get(param);
+  return value === '' || value === 'true' || value === '1';
 }

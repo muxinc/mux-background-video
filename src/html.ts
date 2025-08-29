@@ -3,16 +3,47 @@ import { IMediaDisplay } from './types.js';
 
 type Preload = 'none' | 'metadata' | 'auto';
 
+function getTemplateHTML(attrs: Record<string, string>) {
+  return /*html*/ `
+    <style>
+      video {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    </style>
+    <video ${serializeAttributes(attrs)}></video>
+  `;
+}
+
 export class MuxBackgroundVideoElement extends MuxBackgroundVideoMixin(
   HTMLElement
 ) {
+  static shadowRootOptions = { mode: 'open' as ShadowRootMode };
+  static getTemplateHTML = getTemplateHTML;
+
   static get observedAttributes() {
     return ['src', 'audio', 'max-resolution', 'preload'];
   }
 
   constructor() {
     super();
-    super.display = this.querySelector('video') as IMediaDisplay;
+
+    if (!this.shadowRoot) {
+      this.attachShadow({ mode: 'open' });
+
+      const attrs = {
+        ...namedNodeMapToObject(this.attributes),
+        ...(!this.hasAttribute('nomuted') && { muted: '' }),
+        ...(!this.hasAttribute('noloop') && { loop: '' }),
+        ...(!this.hasAttribute('noautoplay') && { autoplay: '' }),
+      };
+
+      this.shadowRoot!.innerHTML = getTemplateHTML(attrs);
+    }
+
+    super.display = this.video as IMediaDisplay;
   }
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
@@ -22,52 +53,48 @@ export class MuxBackgroundVideoElement extends MuxBackgroundVideoMixin(
       super.src = newValue;
     } else {
       super.config = {
-        audio: this.audio,
-        maxResolution: this.maxResolution,
-        preload: this.preload,
+        audio: this.hasAttribute('audio'),
+        maxResolution: this.getAttribute('max-resolution') ?? undefined,
+        preload: (this.getAttribute('preload') as Preload) ?? undefined,
       };
     }
   }
 
-  get src() {
-    return this.getAttribute('src') ?? '';
+  get video() {
+    return this.shadowRoot?.querySelector('video') as HTMLVideoElement;
   }
+}
 
-  set src(value: string) {
-    this.setAttribute('src', value);
+function namedNodeMapToObject(namedNodeMap: NamedNodeMap) {
+  const obj: Record<string, string> = {};
+  for (const attr of namedNodeMap) {
+    obj[attr.name] = attr.value;
   }
+  return obj;
+}
 
-  get audio() {
-    return this.hasAttribute('audio');
-  }
+const VideoAttributes = [
+  'autoplay',
+  'controls',
+  'controlslist',
+  'crossorigin',
+  'loop',
+  'muted',
+  'playsinline',
+  'preload',
+] as const;
 
-  set audio(value: boolean) {
-    this.toggleAttribute('audio', !!value);
-  }
+function serializeAttributes(attrs: Record<string, string>): string {
+  let html = '';
+  for (const key in attrs) {
+    // Skip forwarding non native video attributes.
+    if (!VideoAttributes.includes(key as any)) continue;
 
-  get maxResolution() {
-    return this.getAttribute('max-resolution') ?? undefined;
+    const value = attrs[key];
+    if (value === '') html += ` ${key}`;
+    else html += ` ${key}="${value}"`;
   }
-
-  set maxResolution(value: string | undefined) {
-    if (value) {
-      this.setAttribute('max-resolution', value);
-    } else {
-      this.removeAttribute('max-resolution');
-    }
-  }
-
-  get preload() {
-    return this.getAttribute('preload') as Preload | undefined;
-  }
-
-  set preload(value: Preload | undefined) {
-    if (value) {
-      this.setAttribute('preload', value);
-    } else {
-      this.removeAttribute('preload');
-    }
-  }
+  return html;
 }
 
 if (
