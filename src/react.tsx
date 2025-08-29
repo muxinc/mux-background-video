@@ -17,52 +17,55 @@ export type MuxBackgroundVideoRef = Partial<MuxBackgroundVideoCore['display']>;
 export const MuxBackgroundVideo = forwardRef<
   MuxBackgroundVideoRef,
   MuxBackgroundVideoProps
->(({ src, audio = false, maxResolution, className, style, ...props }, ref) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const muxRef = useRef<InstanceType<typeof MuxBackgroundVideoCore> | null>(
-    null
-  );
+>(
+  (
+    { src, audio = false, maxResolution, preload, className, style, ...props },
+    ref
+  ) => {
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const muxRef = useRef<MuxBackgroundVideoCore | null>(null);
 
-  useEffect(() => {
-    if (!videoRef.current) return;
+    useEffect(() => {
+      if (!videoRef.current) return;
 
-    muxRef.current ??= new MuxBackgroundVideoCore();
-    muxRef.current.display = videoRef.current;
-    muxRef.current.config = {
-      audio,
-      maxResolution,
-    };
-    muxRef.current.src = src ?? '';
+      muxRef.current ??= new MuxBackgroundVideoCore();
+      muxRef.current.display = videoRef.current;
+      muxRef.current.config = {
+        audio,
+        maxResolution,
+        preload,
+      };
+      muxRef.current.src = src ?? '';
 
-    return () => {
-      if (muxRef.current) {
-        muxRef.current.display = undefined;
-        muxRef.current = null;
-      }
-    };
-  }, [src, audio, maxResolution]);
+      return () => {
+        if (muxRef.current) {
+          muxRef.current = null;
+        }
+      };
+    }, [src, audio, maxResolution, preload]);
 
-  // Expose methods via ref
-  useImperativeHandle(
-    ref,
-    () => ({
-      play: () => videoRef.current!.play(),
-      pause: () => videoRef.current!.pause(),
-    }),
-    []
-  );
+    // Expose methods via ref
+    useImperativeHandle(
+      ref,
+      () => ({
+        play: () => videoRef.current!.play(),
+        pause: () => videoRef.current!.pause(),
+      }),
+      []
+    );
 
-  return (
-    <video
-      ref={videoRef}
-      className={className}
-      style={style}
-      playsInline
-      autoPlay
-      loop
-      {...props}
-    />
-  );
-});
+    return (
+      <video
+        ref={videoRef}
+        className={className}
+        style={style}
+        playsInline
+        autoPlay
+        loop
+        {...props}
+      />
+    );
+  }
+);
 
 MuxBackgroundVideo.displayName = 'MuxBackgroundVideo';

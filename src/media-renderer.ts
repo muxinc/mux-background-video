@@ -1,20 +1,33 @@
-import type { IMediaDisplay, IMediaEngine } from './types.js';
-// Use the HlsMini engine by default.
-import { HlsMini, HlsMiniConfig } from './engines/hls-mini/index.js';
+import type {
+  Constructor,
+  IMediaDisplay,
+  IMediaEngine,
+  IMediaEngineStatic,
+} from './types.js';
 
-type Constructor<T> = {
-  new (...args: any[]): T;
-  prototype: T;
+type Preload = 'none' | 'metadata' | 'auto';
+
+export type MediaRendererConfig = {
+  audio?: boolean;
+  maxResolution?: string;
+  preload?: Preload;
 };
 
-export function MediaRendererMixin<T extends Constructor<EventTarget>>(
-  Base: T
-) {
+export type MediaRendererEngineConfig = {
+  audio?: boolean;
+  maxResolution?: string;
+  maxBufferLength?: number;
+};
+
+export function MediaRendererMixin<
+  B extends Constructor<EventTarget>,
+  C extends MediaRendererConfig,
+>(Base: B, Engine: IMediaEngineStatic<MediaRendererEngineConfig>) {
   return class MediaRendererClass extends Base {
     #display?: IMediaDisplay;
-    #engine?: IMediaEngine<HlsMiniConfig>;
+    #engine?: IMediaEngine<MediaRendererEngineConfig>;
     #src = '';
-    #config?: HlsMiniConfig;
+    #config: C = {} as C;
     #loadRequested?: Promise<void> | null;
 
     get display() {
@@ -26,8 +39,8 @@ export function MediaRendererMixin<T extends Constructor<EventTarget>>(
       this.#requestLoad();
     }
 
-    set src(uri: string) {
-      this.#src = uri;
+    set src(src: string) {
+      this.#src = src;
       this.#requestLoad();
     }
 
@@ -35,12 +48,12 @@ export function MediaRendererMixin<T extends Constructor<EventTarget>>(
       return this.#src;
     }
 
-    get config(): HlsMiniConfig | undefined {
+    get config(): C {
       return this.#config;
     }
 
-    set config(config: HlsMiniConfig) {
-      this.#config = config;
+    set config(config: C) {
+      this.#config = config ?? {};
       this.#requestLoad();
     }
 
@@ -51,22 +64,59 @@ export function MediaRendererMixin<T extends Constructor<EventTarget>>(
       this.load();
     }
 
+    destroy() {
+      this.display?.removeEventListener('play', this.#loadSource);
+      this.display?.removeEventListener('play', this.#setMaxBufferLength);
+      this.#display = undefined;
+      this.#engine = undefined;
+      this.#src = '';
+      this.#config = {} as C;
+      this.#loadRequested = undefined;
+    }
+
     load() {
       if (!this.#engine) {
-        this.#engine = new HlsMini() as unknown as IMediaEngine<HlsMiniConfig>;
+        this.#engine = new Engine();
       }
-      if (this.display) {
-        this.#engine.attachMedia(this.display);
+
+      if (!this.display) {
+        return;
       }
+
+      this.#engine.attachMedia(this.display);
+
+      const isPaused = this.display.paused;
+
       if (this.config) {
         this.#engine.config = this.config;
+
+        if (this.config?.preload === 'metadata' && isPaused) {
+          this.#engine.config.maxBufferLength = 0;
+          this.display.addEventListener('play', this.#setMaxBufferLength, {
+            once: true,
+          });
+        }
       }
-      if (this.src) {
-        this.#engine.src = this.src;
+
+      if (this.config?.preload === 'none' && isPaused) {
+        this.display.addEventListener('play', this.#loadSource, { once: true });
+        return;
       }
+
+      this.#loadSource();
     }
+
+    #loadSource = () => {
+      if (this.#engine && this.src) {
+        this.#engine.loadSource(this.src);
+      }
+    };
+
+    #setMaxBufferLength = () => {
+      if (this.#engine) {
+        this.#engine.config.maxBufferLength =
+          Engine.DefaultConfig.maxBufferLength;
+      }
+    };
   };
 }
-
-export const MediaRenderer = MediaRendererMixin(EventTarget);
-export type MediaRenderer = InstanceType<typeof MediaRenderer>;

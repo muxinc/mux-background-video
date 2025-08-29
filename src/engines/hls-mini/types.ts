@@ -1,6 +1,8 @@
+
 export type HlsMiniConfig = {
   audio?: boolean;
   maxResolution?: string;
+  maxBufferLength?: number;
 };
 
 type BaseRendition = {
