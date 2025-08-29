@@ -78,6 +78,17 @@ function HeroSection() {
 }
 ```
 
+## Mux Data Integration
+
+To enable [Mux data](https://www.mux.com/data) collection for your background videos, include the Mux embed script in your HTML page before the Mux Background Video script:
+
+```html
+<script defer src="https://cdn.jsdelivr.net/npm/mux-embed"></script>
+```
+
+Once this script is included, Mux data will automatically be enabled for all background videos on the page, providing you with detailed analytics and insights about video performance.
+
+
 ## API Reference
 
 ### HTML Custom Element: `<mux-background-video>`

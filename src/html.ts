@@ -24,14 +24,16 @@ export class MuxBackgroundVideoElement extends MuxBackgroundVideoMixin(
   static getTemplateHTML = getTemplateHTML;
 
   static get observedAttributes() {
-    return ['src', 'audio', 'max-resolution', 'preload'];
+    return ['src', 'audio', 'debug', 'max-resolution', 'preload'];
   }
 
   constructor() {
     super();
 
     if (!this.shadowRoot) {
-      this.attachShadow({ mode: 'open' });
+      this.attachShadow(
+        (this.constructor as typeof MuxBackgroundVideoElement).shadowRootOptions
+      );
 
       const attrs = {
         ...namedNodeMapToObject(this.attributes),
@@ -54,6 +56,7 @@ export class MuxBackgroundVideoElement extends MuxBackgroundVideoMixin(
     } else {
       super.config = {
         audio: this.hasAttribute('audio'),
+        debug: this.hasAttribute('debug'),
         maxResolution: this.getAttribute('max-resolution') ?? undefined,
         preload: (this.getAttribute('preload') as Preload) ?? undefined,
       };

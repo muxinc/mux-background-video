@@ -19,7 +19,7 @@ export const MuxBackgroundVideo = forwardRef<
   MuxBackgroundVideoProps
 >(
   (
-    { src, audio = false, maxResolution, preload, className, style, ...props },
+    { src, audio, debug, maxResolution, preload, className, style, ...props },
     ref
   ) => {
     const videoRef = useRef<HTMLVideoElement>(null);
@@ -32,6 +32,7 @@ export const MuxBackgroundVideo = forwardRef<
       muxRef.current.display = videoRef.current;
       muxRef.current.config = {
         audio,
+        debug,
         maxResolution,
         preload,
       };
@@ -42,7 +43,7 @@ export const MuxBackgroundVideo = forwardRef<
           muxRef.current = null;
         }
       };
-    }, [src, audio, maxResolution, preload]);
+    }, [src, audio, debug, maxResolution, preload]);
 
     // Expose methods via ref
     useImperativeHandle(
