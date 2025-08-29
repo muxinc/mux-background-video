@@ -1,4 +1,4 @@
-import { html, attrs } from '../api-src/tags.js';
+import { html, attrs, safeJsVar } from '../api-src/tags.js';
 
 export async function GET(req: Request) {
   return new Response(getHtml(req), {
@@ -44,9 +44,9 @@ function getHtml(req: Request) {
             performance.now();
 
           mux.monitor('#video', {
-            debug: ${getParam(req, 'debug')},
+            debug: ${getBooleanParam(req, 'debug')},
             data: {
-              video_id: '${getPlaybackId(req)}',
+              video_id: ${safeJsVar(getPlaybackId(req))},
               video_title: 'Mux Background Video Demo',
               video_stream_type: 'on-demand',
               player_name: 'mux-background-video',
@@ -58,7 +58,7 @@ function getHtml(req: Request) {
           mux.setStateDataTranslator('#video', (state) => {
             return {
               ...state,
-              video_source_url: '${getSourceUrl(req)}',
+              video_source_url: ${safeJsVar(getSourceUrl(req))},
             };
           });
         }
@@ -148,7 +148,7 @@ function getAttributes(
   return attrs(attributes);
 }
 
-function getParam(req: Request, param: string) {
+function getBooleanParam(req: Request, param: string) {
   const searchParams = new URL(req.url).searchParams;
   return searchParams.get(param) === 'true' || searchParams.get(param) === '1';
 }
