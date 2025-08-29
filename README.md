@@ -51,6 +51,7 @@ The easiest way to use Mux Background Video is with the custom HTML element:
   <mux-background-video 
     src="https://stream.mux.com/YOUR_PLAYBACK_ID.m3u8" 
     max-resolution="720p"
+    preload="metadata"
   >
     <video autoplay muted loop playsinline></video>
   </mux-background-video>
@@ -101,6 +102,10 @@ The `<mux-background-video>` element wraps a `<video>` element and automatically
 - **`src`**: The Mux HLS stream URL (required)
 - **`max-resolution`**: Maximum resolution for the video (e.g., "720p", "1080p")
 - **`audio`**: Enable audio track (default: false)
+- **`preload`**: Controls video preloading behavior (default: auto)
+  - `"none"`: No preloading
+  - `"metadata"`: Preload only metadata
+  - `"auto"`: Preload video data
 
 #### HTML Structure
 
@@ -126,10 +131,14 @@ element.audio = true;
 // Set the stream URL
 element.src = 'https://stream.mux.com/NEW_PLAYBACK_ID.m3u8';
 
+// Set preload behavior
+element.preload = 'metadata';
+
 // Get current values
 console.log(element.src);
 console.log(element.maxResolution);
 console.log(element.audio);
+console.log(element.preload);
 ```
 
 ### React Component: `MuxBackgroundVideo`
@@ -139,6 +148,10 @@ console.log(element.audio);
 - **`src`**: The Mux HLS stream URL (required)
 - **`maxResolution`**: Maximum resolution for the video (e.g., "720p", "1080p")
 - **`audio`**: Enable audio track (default: false)
+- **`preload`**: Controls video preloading behavior (default: auto)
+  - `"none"`: No preloading
+  - `"metadata"`: Preload only metadata
+  - `"auto"`: Preload video data
 
 
 #### Example
@@ -148,6 +161,7 @@ console.log(element.audio);
   src="https://stream.mux.com/YOUR_PLAYBACK_ID.m3u8"
   maxResolution="720p"
   audio={true}
+  preload="metadata"
   autoPlay
   muted
   loop
@@ -193,10 +207,11 @@ When running the dev server, you can use the following URL parameters:
 - **`playbackId`**: Set a custom Mux playback ID (defaults to demo video)
 - **`maxResolution`**: Set maximum resolution for the background video
 - **`audio`**: Enable or disable audio track (default: false)
+- **`preload`**: Set preload behavior ("none", "metadata", or "auto")
 
 Example:
 ```
-http://localhost:3000/YOUR_PLAYBACK_ID?maxResolution=720p&audio=1
+http://localhost:3000/YOUR_PLAYBACK_ID?maxResolution=720p&audio=1&preload=metadata
 ```
 
 ## License
