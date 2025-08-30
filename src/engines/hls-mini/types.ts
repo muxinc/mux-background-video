@@ -1,4 +1,3 @@
-
 export type HlsMiniConfig = {
   audio?: boolean;
   maxResolution?: string;
@@ -33,3 +32,13 @@ export type Segment = {
   start?: number;
   end?: number;
 };
+
+// ManagedMediaSource interface for iOS 17+ support
+export interface ManagedMediaSource extends MediaSource {
+  new (): ManagedMediaSource;
+  prototype: MediaSource;
+}
+
+declare global {
+  var ManagedMediaSource: ManagedMediaSource;
+}

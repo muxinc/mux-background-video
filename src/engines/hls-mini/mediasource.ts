@@ -1,6 +1,11 @@
 import { getMultivariantPlaylist, getMediaPlaylist } from './playlists.js';
 import type { IMediaDisplay } from '../../types.js';
-import type { HlsMiniConfig, Rendition, Segment } from './types.js';
+import type {
+  HlsMiniConfig,
+  Rendition,
+  Segment,
+  ManagedMediaSource,
+} from './types.js';
 import { ChunkedStreamIterable } from './chunked-stream-iterable.js';
 
 type SourceBufferData = Parameters<SourceBuffer['appendBuffer']>[0];
@@ -74,7 +79,7 @@ const initMediaSource = async (
   mediaPlaylists: Rendition[],
   mediaEl: IMediaDisplay
 ) => {
-  const mediaSource = new MediaSource();
+  const mediaSource = new (globalThis.ManagedMediaSource ?? MediaSource)();
   mediaEl.src = URL.createObjectURL(mediaSource);
   await eventToPromise(mediaSource, 'sourceopen');
 
@@ -110,7 +115,7 @@ const getMediaDuration = (playlists: Rendition[]) => {
 
 const initLoadSegments = (
   mediaPlaylists: Rendition[],
-  mediaSource: MediaSource,
+  mediaSource: MediaSource | ManagedMediaSource,
   mediaEl: IMediaDisplay,
   config: HlsMiniConfig,
   signal: AbortSignal
@@ -200,7 +205,10 @@ const initLoadSegments = (
   mediaEl.addEventListener('timeupdate', loadNextSegments);
 };
 
-const checkEndOfStream = (mediaSource: MediaSource, mediaDuration: number) => {
+const checkEndOfStream = (
+  mediaSource: MediaSource | ManagedMediaSource,
+  mediaDuration: number
+) => {
   if (
     mediaDuration > 0 &&
     mediaSource.readyState === 'open' &&
@@ -319,7 +327,7 @@ const fetchSegmentChunks = async (uri: string) => {
 };
 
 const appendSegment = async (
-  mediaSource: MediaSource,
+  mediaSource: MediaSource | ManagedMediaSource,
   sourceBuffer: SourceBuffer,
   segmentData: Uint8Array
 ) => {
@@ -367,7 +375,7 @@ export const eventToPromise = async (
 };
 
 const areFinalSegmentsBuffered = (
-  mediaSource: MediaSource,
+  mediaSource: MediaSource | ManagedMediaSource,
   duration: number
 ) => {
   return Array.from(mediaSource.sourceBuffers).every((sb) =>

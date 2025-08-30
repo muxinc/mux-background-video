@@ -60,9 +60,12 @@ export const MuxBackgroundVideo = forwardRef<
         ref={videoRef}
         className={className}
         style={style}
-        playsInline
+        muted
         autoPlay
         loop
+        playsInline
+        disableRemotePlayback
+        disablePictureInPicture
         {...props}
       />
     );

@@ -40,6 +40,9 @@ export class MuxBackgroundVideoElement extends MuxBackgroundVideoMixin(
         ...(!this.hasAttribute('nomuted') && { muted: '' }),
         ...(!this.hasAttribute('noloop') && { loop: '' }),
         ...(!this.hasAttribute('noautoplay') && { autoplay: '' }),
+        playsinline: '',
+        disableremoteplayback: '',
+        disablepictureinpicture: '',
       };
 
       this.shadowRoot!.innerHTML = getTemplateHTML(attrs);
@@ -81,6 +84,8 @@ const VideoAttributes = [
   'controls',
   'controlslist',
   'crossorigin',
+  'disablepictureinpicture',
+  'disableremoteplayback',
   'loop',
   'muted',
   'playsinline',
