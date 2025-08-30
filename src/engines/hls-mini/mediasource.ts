@@ -1,11 +1,6 @@
 import { getMultivariantPlaylist, getMediaPlaylist } from './playlists.js';
 import type { IMediaDisplay } from '../../types.js';
-import type {
-  HlsMiniConfig,
-  Rendition,
-  Segment,
-  ManagedMediaSource,
-} from './types.js';
+import type { HlsMiniConfig, Rendition, Segment } from './types.js';
 import { ChunkedStreamIterable } from './chunked-stream-iterable.js';
 
 type SourceBufferData = Parameters<SourceBuffer['appendBuffer']>[0];
