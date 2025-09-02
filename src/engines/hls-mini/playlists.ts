@@ -1,4 +1,5 @@
 import { Segment, Rendition } from './types.js';
+import { fetchWithRetry } from './utils.js';
 
 type MediaPlaylistModel<T extends Segment = Segment> = T[];
 type MultivariantPlaylistModel<T extends Rendition = Rendition> = T[];
@@ -148,7 +149,7 @@ const getPlaylistFromURI = async <T>(
 ): Promise<T> => {
   const baseURI = uriToBaseURI(uri);
   const context = { baseURI };
-  return fetch(uri, { signal })
+  return fetchWithRetry(uri, { signal })
     .then((resp) => resp.text())
     .then((playlistStr) =>
       reducedParse(playlistStr, PlaylistReducerTuples, context)
