@@ -2,6 +2,7 @@ import { getMultivariantPlaylist, getMediaPlaylist } from './playlists.js';
 import type { IMediaDisplay } from '../../types.js';
 import type { HlsMiniConfig, Rendition, Segment } from './types.js';
 import { ChunkedStreamIterable } from './chunked-stream-iterable.js';
+import { fetchWithRetry } from './utils.js';
 
 type SourceBufferData = Parameters<SourceBuffer['appendBuffer']>[0];
 
@@ -314,7 +315,7 @@ const isRangeInBuffered = (
 };
 
 const fetchSegmentChunks = async (uri: string) => {
-  const response = await fetch(uri);
+  const response = await fetchWithRetry(uri);
   if (!response.ok || !response.body) {
     throw new Error(`Failed to fetch segment: ${response.status}`);
   }
