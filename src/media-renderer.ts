@@ -76,12 +76,17 @@ export function MediaRendererMixin<
     }
 
     load() {
-      if (!this.#engine) {
-        this.#engine = new Engine();
-      }
-
       if (!this.display) {
         return;
+      }
+
+      if (typeof MediaSource === 'undefined') {
+        this.display.src = this.src;
+        return;
+      }
+
+      if (!this.#engine) {
+        this.#engine = new Engine();
       }
 
       this.#engine.attachMedia(this.display);
