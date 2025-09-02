@@ -11,95 +11,45 @@ export const fetchWithRetry = async (
   url: string,
   options: FetchWithRetryOptions = {}
 ): Promise<Response> => {
-  const { maxRetries = 5, baseDelay = 1000, signal, ...fetchOptions } = options;
+  const { maxRetries = 5, baseDelay = 1000, ...fetchOptions } = options;
+  const effectiveMaxRetries = Math.max(1, maxRetries);
 
-  let lastError: Error | null = null;
-
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+  for (let attempt = 0; attempt <= effectiveMaxRetries; attempt++) {
     try {
-      const response = await fetch(url, { ...fetchOptions, signal });
+      const response = await fetch(url, { ...fetchOptions });
 
-      // If the response is successful, return it immediately
-      if (response.ok) {
-        return response;
-      }
+      if (response.ok) return response;
 
-      // If this is the last attempt, throw the error
-      if (attempt === maxRetries) {
+      // Don't retry on client errors (except specific ones)
+      if (response.status < 500 && ![408, 429].includes(response.status)) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      // Check if we should retry based on status code
-      if (!shouldRetry(response.status)) {
+      // If last attempt, throw error
+      if (attempt === effectiveMaxRetries) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
-
-      // Calculate delay with exponential backoff
-      const delay = calculateDelay(attempt, baseDelay);
-
-      // Wait before retrying
-      await sleep(delay);
     } catch (error) {
-      lastError = error as Error;
+      const err = error as Error;
 
-      // If this is the last attempt, throw the error
-      if (attempt === maxRetries) {
-        throw lastError;
+      // Don't retry on non-network errors
+      if (
+        attempt === effectiveMaxRetries ||
+        (err.name !== 'TypeError' &&
+          !err.message.includes('fetch') &&
+          !err.message.includes('network'))
+      ) {
+        throw err;
       }
+    }
 
-      // If it's a network error or abort, retry
-      if (shouldRetryError(error as Error)) {
-        const delay = calculateDelay(attempt, baseDelay);
-        await sleep(delay);
-        continue;
-      }
-
-      // For other errors, don't retry
-      throw lastError;
+    // Wait before retry (except on last iteration)
+    if (attempt < effectiveMaxRetries) {
+      const delay =
+        baseDelay * Math.pow(2, attempt) * (1 + Math.random() * 0.1);
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
 
-  throw lastError || new Error('Unknown error occurred');
-};
-
-/**
- * Determine if a status code should trigger a retry
- */
-const shouldRetry = (status: number): boolean => {
-  // Retry on 5xx server errors and some 4xx client errors
-  return (
-    status >= 500 || // Server errors
-    status === 408 || // Request timeout
-    status === 429 // Too many requests
-  );
-};
-
-/**
- * Determine if an error should trigger a retry
- */
-const shouldRetryError = (error: Error): boolean => {
-  // Retry on network errors, timeouts
-  return (
-    error.name === 'TypeError' || // Network errors
-    error.message.includes('fetch') || // Fetch API errors
-    error.message.includes('network') // Network-related errors
-  );
-};
-
-/**
- * Calculate delay for next retry attempt
- */
-const calculateDelay = (attempt: number, baseDelay: number): number => {
-  // Exponential backoff: baseDelay * 2^attempt
-  // Add some jitter to prevent thundering herd
-  const exponentialDelay = baseDelay * Math.pow(2, attempt);
-  const jitter = Math.random() * 0.1 * exponentialDelay; // 10% jitter
-  return exponentialDelay + jitter;
-};
-
-/**
- * Sleep utility function
- */
-const sleep = (ms: number): Promise<void> => {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  throw new Error();
 };
