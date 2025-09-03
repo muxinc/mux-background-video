@@ -1,4 +1,4 @@
-import { assert, fixture, html } from '@open-wc/testing';
+import { assert, fixture, html, oneEvent, aTimeout } from '@open-wc/testing';
 import { MuxBackgroundVideoElement } from '../src/html.js';
 
 describe('MuxBackgroundVideoElement - Simple Tests', () => {
@@ -29,7 +29,7 @@ describe('MuxBackgroundVideoElement - Simple Tests', () => {
       assert.isTrue(element.video.loop, 'Video should be looping');
       assert.isTrue(element.video.muted, 'Video should be muted');
 
-      await new Promise(resolve => element.video.addEventListener('playing', resolve));
+      await oneEvent(element.video, 'playing');
       assert.isFalse(element.video.paused, 'Video should not be paused');
     });
 
@@ -37,7 +37,8 @@ describe('MuxBackgroundVideoElement - Simple Tests', () => {
       this.timeout(10000);
 
       element = await fixture(html`<mux-background-video src="https://stream.mux.com/crDG1Lz1004PuNKSqiw02PFumJlY7nx500v5M02RXdD36hg.m3u8"></mux-background-video>`);
-      await new Promise(resolve => element.video.addEventListener('playing', resolve));
+      await oneEvent(element.video, 'durationchange');
+      await aTimeout(100);
       
       assert.isNumber(element.video.duration, 'Video duration should be set');
       assert.isAbove(element.video.duration, 0, 'Video duration should be greater than 0');

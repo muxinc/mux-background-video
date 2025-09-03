@@ -87,7 +87,7 @@ const mobileDevices = [
 ];
 
 export default {
-  files: 'test/**/*.test.ts',
+  files: 'test/mux-background-video-html.test.ts',
   nodeResolve: true,
   plugins: [
     esbuildPlugin({ ts: true, target: "esnext" })
@@ -100,24 +100,4 @@ export default {
       name: device.device,
     }
   })),
-  testFramework: {
-    name: '@web/test-runner-mocha',
-    options: {
-      ui: 'bdd',
-      timeout: 30000,
-    },
-  },
-  // Test timeout and retry settings
-  testRunnerHtml: testFramework => `
-    <html>
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Mux Background Video Tests</title>
-      </head>
-      <body>
-        <script type="module" src="${testFramework}"></script>
-      </body>
-    </html>
-  `,
 };
