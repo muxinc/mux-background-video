@@ -92,6 +92,7 @@ export default {
   plugins: [
     esbuildPlugin({ ts: true, target: "esnext" })
   ],
+  concurrentBrowsers: 5,
   browsers: mobileDevices.map(device => browserstackLauncher({
     capabilities: {
       ...device,
