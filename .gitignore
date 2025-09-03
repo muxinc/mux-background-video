@@ -4,3 +4,8 @@ dist/
 .vercel
 
 tsconfig.tsbuildinfo
+
+# Environment variables
+.env
+.env.local
+.env.*.local

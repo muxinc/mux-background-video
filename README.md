@@ -190,6 +190,62 @@ npm start
 - **`npm start`**: Start development server with watch mode
 - **`npm run build`**: Build the project
 - **`npm run watch`**: Watch for changes and rebuild
+- **`npm test`**: Run tests locally
+- **`npm run test:browserstack`**: Run tests on BrowserStack mobile devices
+- **`npm run setup:browserstack`**: Interactive setup for BrowserStack credentials
+
+### Testing
+
+#### Local Testing
+
+Run tests locally:
+```bash
+npm test
+```
+
+#### BrowserStack Mobile Testing
+
+To run tests on real mobile devices via BrowserStack:
+
+1. **Get BrowserStack Credentials**: Sign up at [BrowserStack](https://www.browserstack.com/) and get your username and access key from your account settings.
+
+2. **Set Environment Variables**: You can either:
+
+   **Option A: Use the setup script (recommended):**
+   ```bash
+   npm run setup:browserstack
+   ```
+
+   **Option B: Create a `.env` file manually:**
+   ```bash
+   BROWSERSTACK_USERNAME=your_browserstack_username
+   BROWSERSTACK_ACCESS_KEY=your_browserstack_access_key
+   ```
+
+3. **Install Dependencies**: Install the BrowserStack test runner:
+```bash
+npm install
+```
+
+4. **Run Mobile Tests**: Execute the BrowserStack test suite:
+```bash
+npm run test:browserstack
+```
+
+The BrowserStack configuration includes testing on:
+- **iOS Devices**: iPhone 15 Pro (iOS 17), iPhone 14 (iOS 16), iPhone 12 (iOS 15)
+- **iPad Devices**: iPad Pro 12.9 2022 (iOS 17), iPad Air 2022 (iOS 16)
+- **Android Devices**: Samsung Galaxy S23 (Android 13), Google Pixel 7 (Android 13), OnePlus 9 (Android 12), Samsung Galaxy Tab S8 (Android 12)
+
+#### Test Configuration
+
+The BrowserStack tests are configured with:
+- Video recording enabled
+- Screenshot capture on test completion
+- Network logs for debugging
+- Console logs for detailed output
+- 30-second timeout per test
+- 2 retry attempts on failure
 
 ### Development Server
 
