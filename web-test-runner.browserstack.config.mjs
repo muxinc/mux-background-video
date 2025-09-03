@@ -42,31 +42,31 @@ const mobileDevices = [
   },
   // iPad devices
   {
-    device: 'iPad Pro 12.9 2022',
-    os: 'ios',
-    osVersion: '16',
-    browserName: 'safari',
-    browserVersion: 'latest',
-  },
-  {
     device: 'iPad Air 13 2025',
     os: 'ios',
     osVersion: '18',
     browserName: 'safari',
     browserVersion: 'latest',
   },
-  // Android devices
   {
-    device: 'Samsung Galaxy S23',
-    os: 'android',
-    osVersion: '13.0',
-    browserName: 'chrome',
+    device: 'iPad Pro 12.9 2022',
+    os: 'ios',
+    osVersion: '16',
+    browserName: 'safari',
     browserVersion: 'latest',
   },
+  // Android devices
   {
     device: 'Google Pixel 10 Pro',
     os: 'android',
     osVersion: '16.0',
+    browserName: 'chrome',
+    browserVersion: 'latest',
+  },
+  {
+    device: 'Samsung Galaxy S23',
+    os: 'android',
+    osVersion: '13.0',
     browserName: 'chrome',
     browserVersion: 'latest',
   },
@@ -77,17 +77,10 @@ const mobileDevices = [
     browserName: 'chrome',
     browserVersion: 'latest',
   },
-  {
-    device: 'Samsung Galaxy Tab S8',
-    os: 'android',
-    osVersion: '12.0',
-    browserName: 'chrome',
-    browserVersion: 'latest',
-  },
 ];
 
 export default {
-  files: 'test/mux-background-video-html.test.ts',
+  files: 'test/integration/playback.test.ts',
   nodeResolve: true,
   plugins: [
     esbuildPlugin({ ts: true, target: "esnext" })
@@ -100,4 +93,5 @@ export default {
       name: device.device,
     }
   })),
+  filterBrowserLogs: ({ args }) => !args[0]?.startsWith?.('Lit is in dev mode'),
 };

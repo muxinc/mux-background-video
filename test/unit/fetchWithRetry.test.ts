@@ -1,5 +1,5 @@
 import { assert } from '@open-wc/testing';
-import { fetchWithRetry } from '../src/engines/hls-mini/utils.js';
+import { fetchWithRetry } from '../../src/engines/hls-mini/utils.js';
 
 // Store original global fetch
 const originalFetch = window.fetch;

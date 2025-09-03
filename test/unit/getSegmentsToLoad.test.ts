@@ -2,8 +2,8 @@ import { assert } from '@open-wc/testing';
 import {
   getSegmentsToLoad,
   MIN_BUFFER_AHEAD,
-} from '../src/engines/hls-mini/mediasource.js';
-import type { Segment, HlsMiniConfig } from '../src/engines/hls-mini/types.js';
+} from '../../src/engines/hls-mini/mediasource.js';
+import type { Segment, HlsMiniConfig } from '../../src/engines/hls-mini/types.js';
 
 const SEGMENT_DURATION = MIN_BUFFER_AHEAD;
 

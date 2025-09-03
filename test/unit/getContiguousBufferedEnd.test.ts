@@ -1,5 +1,5 @@
 import { assert } from '@open-wc/testing';
-import { getContiguousBufferedEnd } from '../src/engines/hls-mini/mediasource.js';
+import { getContiguousBufferedEnd } from '../../src/engines/hls-mini/mediasource.js';
 
 // Mock TimeRanges interface for testing
 interface MockTimeRanges {
