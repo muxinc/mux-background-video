@@ -8,10 +8,10 @@ dotenv.config();
 const browserstackCapabilities = {
   project: 'mux-background-video',
   build: `mux-background-video-${process.env.GITHUB_RUN_NUMBER || new Date().toISOString().split('T')[0]}`,
-  'browserstack.debug': true,
-  'browserstack.video': true,
-  'browserstack.networkLogs': true,
-  'browserstack.console': 'verbose',
+  // 'browserstack.debug': true,
+  // 'browserstack.video': true,
+  // 'browserstack.networkLogs': true,
+  // 'browserstack.console': 'verbose',
   'browserstack.user': process.env.BROWSERSTACK_USERNAME,
   'browserstack.key': process.env.BROWSERSTACK_ACCESS_KEY,
 };
