@@ -7,7 +7,7 @@ dotenv.config();
 // BrowserStack capabilities common to all devices
 const browserstackCapabilities = {
   project: 'mux-background-video',
-  build: `mux-background-video-${new Date().toISOString().split('T')[0]}`,
+  build: `mux-background-video-${process.env.GITHUB_RUN_NUMBER || new Date().toISOString().split('T')[0]}`,
   'browserstack.debug': true,
   'browserstack.video': true,
   'browserstack.networkLogs': true,
@@ -64,9 +64,9 @@ const mobileDevices = [
     browserVersion: 'latest',
   },
   {
-    device: 'Google Pixel 7',
+    device: 'Google Pixel 10 Pro',
     os: 'android',
-    osVersion: '13.0',
+    osVersion: '16.0',
     browserName: 'chrome',
     browserVersion: 'latest',
   },

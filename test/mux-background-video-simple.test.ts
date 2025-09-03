@@ -32,6 +32,16 @@ describe('MuxBackgroundVideoElement - Simple Tests', () => {
       await new Promise(resolve => element.video.addEventListener('playing', resolve));
       assert.isFalse(element.video.paused, 'Video should not be paused');
     });
+
+    it('should set duration when src is set', async function() {
+      this.timeout(10000);
+
+      element = await fixture(html`<mux-background-video src="https://stream.mux.com/crDG1Lz1004PuNKSqiw02PFumJlY7nx500v5M02RXdD36hg.m3u8"></mux-background-video>`);
+      await new Promise(resolve => element.video.addEventListener('playing', resolve));
+      
+      assert.isNumber(element.video.duration, 'Video duration should be set');
+      assert.isAbove(element.video.duration, 0, 'Video duration should be greater than 0');
+    });
   });
 
   describe('Basic Rendering', () => {
