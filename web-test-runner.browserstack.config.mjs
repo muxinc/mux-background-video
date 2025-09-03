@@ -44,14 +44,14 @@ const mobileDevices = [
   {
     device: 'iPad Pro 12.9 2022',
     os: 'ios',
-    osVersion: '17',
+    osVersion: '16',
     browserName: 'safari',
     browserVersion: 'latest',
   },
   {
-    device: 'iPad Air 2022',
+    device: 'iPad Air 13 2025',
     os: 'ios',
-    osVersion: '16',
+    osVersion: '18',
     browserName: 'safari',
     browserVersion: 'latest',
   },
