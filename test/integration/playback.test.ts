@@ -20,7 +20,7 @@ describe('Playback', () => {
   it('should autoplay looping muted video', async function() {
     this.timeout(10000);
 
-    element = await fixture(html`<mux-background-video src="https://stream.mux.com/crDG1Lz1004PuNKSqiw02PFumJlY7nx500v5M02RXdD36hg.m3u8"></mux-background-video>`);
+    element = await fixture(html`<mux-background-video max-resolution="270p" src="https://stream.mux.com/crDG1Lz1004PuNKSqiw02PFumJlY7nx500v5M02RXdD36hg.m3u8"></mux-background-video>`);
     assert.isTrue(element.video.autoplay, 'Video should be autoplaying');
     assert.isTrue(element.video.loop, 'Video should be looping');
     assert.isTrue(element.video.muted, 'Video should be muted');
@@ -32,7 +32,7 @@ describe('Playback', () => {
   it('should set duration when src is set', async function() {
     this.timeout(10000);
 
-    element = await fixture(html`<mux-background-video src="https://stream.mux.com/crDG1Lz1004PuNKSqiw02PFumJlY7nx500v5M02RXdD36hg.m3u8"></mux-background-video>`);
+    element = await fixture(html`<mux-background-video max-resolution="270p" src="https://stream.mux.com/crDG1Lz1004PuNKSqiw02PFumJlY7nx500v5M02RXdD36hg.m3u8"></mux-background-video>`);
     await oneEvent(element.video, 'durationchange');
     await aTimeout(100);
     
@@ -43,7 +43,7 @@ describe('Playback', () => {
   it('should have at least 15s of buffer loaded after some time by default', async function() {
     this.timeout(15000);
 
-    element = await fixture(html`<mux-background-video src="https://stream.mux.com/crDG1Lz1004PuNKSqiw02PFumJlY7nx500v5M02RXdD36hg.m3u8"></mux-background-video>`);
+    element = await fixture(html`<mux-background-video max-resolution="270p" src="https://stream.mux.com/crDG1Lz1004PuNKSqiw02PFumJlY7nx500v5M02RXdD36hg.m3u8"></mux-background-video>`);
 
     let totalBuffered = 0;
     // Wait until at least 15 seconds of content is buffered
@@ -66,7 +66,7 @@ describe('Playback', () => {
   it('should have current time pass 6s after some time', async function() {
     this.timeout(15000);
 
-    element = await fixture(html`<mux-background-video src="https://stream.mux.com/crDG1Lz1004PuNKSqiw02PFumJlY7nx500v5M02RXdD36hg.m3u8"></mux-background-video>`);
+    element = await fixture(html`<mux-background-video max-resolution="270p" src="https://stream.mux.com/crDG1Lz1004PuNKSqiw02PFumJlY7nx500v5M02RXdD36hg.m3u8"></mux-background-video>`);
     await oneEvent(element.video, 'playing');
     
     element.video.currentTime = 4.8;
