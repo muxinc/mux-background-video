@@ -246,4 +246,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Support
 
-For issues and questions, please [open an issue](./issues/new) on GitHub.
+For issues and questions, please [open an issue](https://github.com/muxinc/mux-background-video/issues/new) on GitHub.
