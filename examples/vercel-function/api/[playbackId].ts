@@ -1,4 +1,4 @@
-import { html, attrs, safeJsVar } from '../api-src/tags.js';
+import { html, attrs } from '../api-src/tags.js';
 
 export async function GET(req: Request) {
   return new Response(getHtml(req), {
@@ -15,7 +15,7 @@ function getHtml(req: Request) {
         <title>Mux Background Video Demo</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <style>
-          html, 
+          html,
           body {
             height: 100%;
           }
@@ -40,28 +40,6 @@ function getHtml(req: Request) {
         <mux-background-video ${getBackgroundVideoAttributes(req)}>
           <img src="${getImageUrl(req)}" alt="Mux Background Video" />
         </mux-background-video>
-
-        <script type="module">
-          const { video } = document.querySelector('mux-background-video');
-          video.addEventListener('error', () => {
-            console.log(video.error);
-          });
-          video.addEventListener('loadstart', () => {
-            console.log('loadstart', video.currentSrc);
-          });
-          video.addEventListener('loadedmetadata', () => {
-            console.log('loadedmetadata', video.duration);
-          });
-          video.addEventListener('loadeddata', () => {
-            console.log('loadeddata');
-          });
-          video.addEventListener('canplay', () => {
-            console.log('canplay');
-          });
-          video.addEventListener('canplaythrough', () => {
-            console.log('canplaythrough');
-          });
-        </script>
       </body>
     </html>`;
 }

@@ -149,12 +149,14 @@ const initLoadSegments = (
           for (const segment of segmentsToLoad) {
             const segUrl = new URL(segment.uri!);
             try {
-              console.log(
-                `${index ? 'audio' : 'video'}`,
-                `${segment.start} -> ${segment.end}`,
-                segUrl.hostname,
-                segUrl.pathname
-              );
+              if (config.debug) {
+                console.info(
+                  `${index ? 'audio' : 'video'}`,
+                  `${segment.start} -> ${segment.end}`,
+                  segUrl.hostname,
+                  segUrl.pathname
+                );
+              }
 
               const segmentChunks = await fetchSegmentChunks(segment.uri!);
               for await (const chunk of segmentChunks) {
