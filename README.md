@@ -33,22 +33,30 @@ The easiest way to use Mux Background Video is with the custom element:
 <head>
   <title>Background Video</title>
   <style>
+    html, 
+    body {
+      height: 100%;
+    }
+
     body {
       margin: 0;
       padding: 0;
-      background-color: #000;
     }
     
-    mux-background-video {
+    mux-background-video,
+    img {
       display: block;
-      width: 100vw;
-      height: 100vh;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
   </style>
   <script type="module" src="http://cdn.jsdelivr.net/npm/mux-background-video/html/+esm"></script>
 </head>
 <body>
-  <mux-background-video src="https://stream.mux.com/YOUR_PLAYBACK_ID.m3u8"></mux-background-video>
+  <mux-background-video src="https://stream.mux.com/YOUR_PLAYBACK_ID.m3u8">
+    <img src="https://image.mux.com/YOUR_PLAYBACK_ID/thumbnail.webp?time=0" alt="Mux Background Video" />
+  </mux-background-video>
 </body>
 </html>
 ```
@@ -73,7 +81,9 @@ import { MuxBackgroundVideo } from 'mux-background-video/react';
 
 function HeroSection() {
   return (
-    <MuxBackgroundVideo src="https://stream.mux.com/YOUR_PLAYBACK_ID.m3u8" />
+    <MuxBackgroundVideo src="https://stream.mux.com/YOUR_PLAYBACK_ID.m3u8">
+      <img src="https://image.mux.com/YOUR_PLAYBACK_ID/thumbnail.webp?time=0" alt="Mux Background Video" />
+    </MuxBackgroundVideo>
   );
 }
 ```
@@ -108,7 +118,9 @@ The `<mux-background-video>` element automatically handles HLS streaming.
 #### HTML Structure
 
 ```html
-<mux-background-video audio max-resolution="720p" src="YOUR_STREAM_URL"></mux-background-video>
+<mux-background-video audio max-resolution="720p" src="YOUR_STREAM_URL">
+  <img src="https://image.mux.com/YOUR_PLAYBACK_ID/thumbnail.webp?time=0" alt="Mux Background Video" />
+</mux-background-video>
 ```
 
 #### JavaScript Attributes
@@ -157,7 +169,9 @@ console.log(element.getAttribute('preload'));
   src="https://stream.mux.com/YOUR_PLAYBACK_ID.m3u8"
   maxResolution="720p"
   audio={true}
-/>
+>
+  <img src="https://image.mux.com/YOUR_PLAYBACK_ID/thumbnail.webp?time=0" alt="Mux Background Video" />
+</MuxBackgroundVideo>
 ```
 
 ## Development

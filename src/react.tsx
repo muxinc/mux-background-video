@@ -19,7 +19,17 @@ export const MuxBackgroundVideo = forwardRef<
   MuxBackgroundVideoProps
 >(
   (
-    { src, audio, debug, maxResolution, preload, className, style, ...props },
+    {
+      className,
+      style,
+      children,
+      src,
+      audio,
+      debug,
+      maxResolution,
+      preload,
+      ...props
+    },
     ref
   ) => {
     const videoRef = useRef<HTMLVideoElement>(null);
@@ -56,18 +66,46 @@ export const MuxBackgroundVideo = forwardRef<
     );
 
     return (
-      <video
-        ref={videoRef}
-        className={className}
+      <div
+        className={`${className ? `${className} ` : ''}mux-background-video`}
         style={style}
-        muted
-        autoPlay
-        loop
-        playsInline
-        disableRemotePlayback
-        disablePictureInPicture
-        {...props}
-      />
+      >
+        <style>{
+          /*css*/ `
+          .mux-background-video {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+          }
+
+          .mux-background-video > video {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: inherit;
+          }
+
+          .mux-background-video > :where(img, picture) {
+            width: 100%;
+            height: 100%;
+            object-fit: inherit;
+          }
+        `
+        }</style>
+        {children}
+        <video
+          ref={videoRef}
+          muted
+          autoPlay
+          loop
+          playsInline
+          disableRemotePlayback
+          disablePictureInPicture
+          {...props}
+        />
+      </div>
     );
   }
 );

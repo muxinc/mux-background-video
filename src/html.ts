@@ -6,13 +6,19 @@ type Preload = 'none' | 'metadata' | 'auto';
 function getTemplateHTML(attrs: Record<string, string>) {
   return /*html*/ `
     <style>
+      :host {
+        position: relative;
+      }
+
       video {
-        display: block;
+        position: absolute;
+        inset: 0;
         width: 100%;
         height: 100%;
-        object-fit: cover;
+        object-fit: inherit;
       }
     </style>
+    <slot></slot>
     <video ${serializeAttributes(attrs)}></video>
   `;
 }

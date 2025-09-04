@@ -2,9 +2,23 @@ import { MuxBackgroundVideo } from 'mux-background-video/react';
 
 export default function Home() {
   return (
-    <MuxBackgroundVideo
-      src="https://stream.mux.com/XmScTfBovGOFDzH024025XpMGMWnaJEIHQS2hI98tpS00Y.m3u8"
-      maxResolution="720p"
-    />
+    <>
+      <style
+        dangerouslySetInnerHTML={{
+          __html: /*css*/ `
+          html,
+          body {
+            height: 100%;
+          }
+        `,
+        }}
+      />
+      <MuxBackgroundVideo src="https://stream.mux.com/crDG1Lz1004PuNKSqiw02PFumJlY7nx500v5M02RXdD36hg.m3u8">
+        <img
+          src="https://image.mux.com/crDG1Lz1004PuNKSqiw02PFumJlY7nx500v5M02RXdD36hg/thumbnail.webp?time=0"
+          alt="Mux Background Video"
+        />
+      </MuxBackgroundVideo>
+    </>
   );
 }

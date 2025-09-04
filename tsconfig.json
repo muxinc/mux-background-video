@@ -1,23 +1,15 @@
 {
   "compilerOptions": {
-    "preserveWatchOutput": true,
-    "rootDir": "src",
-    "outDir": "dist",
+    "target": "es2020",
+    "module": "es2020",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
     "declaration": true,
     "emitDeclarationOnly": true,
-    "incremental": true,
-    "target": "ES2019",
-    "module": "es6",
-    "jsx": "react",
-    "sourceMap": true,
-    "composite": true,
-    "strict": true,
-    "noImplicitAny": true,
-    "moduleResolution": "Bundler",
+    "skipLibCheck": true,
     "esModuleInterop": true,
-    "skipLibCheck": false,
-    "forceConsistentCasingInFileNames": true,
-    "typeRoots": ["node_modules/@types"]
+    "preserveWatchOutput": true
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
 }
