@@ -30,8 +30,21 @@ jobs:
     - run: npm ci
     - run: npm test
 
-  browserstack-tests:
+  browserstack-test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        device: [
+          'iphone-15-pro',
+          'iphone-14', 
+          'iphone-12',
+          'ipad-air-13-2025',
+          'ipad-pro-12-9-2022',
+          'google-pixel-10-pro',
+          'samsung-galaxy-s23',
+          'oneplus-9'
+        ]
+      max-parallel: 2
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
@@ -43,7 +56,8 @@ jobs:
       env:
         BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
         BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
+        TEST_DEVICE: ${{ matrix.device }}
       with:
         timeout_minutes: 10
-        max_attempts: 6
-        command: npm run test:browserstack
+        max_attempts: 3
+        command: TEST_DEVICE=${{ matrix.device }} npm run test:browserstack
