@@ -9,56 +9,61 @@ export async function GET(req: Request) {
 }
 
 function getHtml(req: Request) {
-  return html` <html>
-    <head>
-      <title>Mux Background Video Demo</title>
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <style>
-        body {
-          margin: 0;
-          padding: 0;
-          background-color: #000;
-        }
+  return html`<!DOCTYPE html>
+    <html>
+      <head>
+        <title>Mux Background Video Demo</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <style>
+          html, 
+          body {
+            height: 100%;
+          }
 
-        mux-background-video,
-        video {
-          display: block;
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-      </style>
-      <script defer src="https://cdn.jsdelivr.net/npm/mux-embed"></script>
-      <script type="module" src="./dist/mux-background-video.js"></script>
-    </head>
-    <body>
-      <mux-background-video
-        ${getBackgroundVideoAttributes(req)}
-      ></mux-background-video>
+          body {
+            margin: 0;
+            padding: 0;
+          }
 
-      <script type="module">
-        const { video } = document.querySelector('mux-background-video');
-        video.addEventListener('error', () => {
-          console.log(video.error);
-        });
-        video.addEventListener('loadstart', () => {
-          console.log('loadstart', video.currentSrc);
-        });
-        video.addEventListener('loadedmetadata', () => {
-          console.log('loadedmetadata', video.duration);
-        });
-        video.addEventListener('loadeddata', () => {
-          console.log('loadeddata');
-        });
-        video.addEventListener('canplay', () => {
-          console.log('canplay');
-        });
-        video.addEventListener('canplaythrough', () => {
-          console.log('canplaythrough');
-        });
-      </script>
-    </body>
-  </html>`;
+          mux-background-video,
+          img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+          }
+        </style>
+        <script defer src="https://cdn.jsdelivr.net/npm/mux-embed"></script>
+        <script type="module" src="./dist/mux-background-video.js"></script>
+      </head>
+      <body>
+        <mux-background-video ${getBackgroundVideoAttributes(req)}>
+          <img src="${getImageUrl(req)}" alt="Mux Background Video" />
+        </mux-background-video>
+
+        <script type="module">
+          const { video } = document.querySelector('mux-background-video');
+          video.addEventListener('error', () => {
+            console.log(video.error);
+          });
+          video.addEventListener('loadstart', () => {
+            console.log('loadstart', video.currentSrc);
+          });
+          video.addEventListener('loadedmetadata', () => {
+            console.log('loadedmetadata', video.duration);
+          });
+          video.addEventListener('loadeddata', () => {
+            console.log('loadeddata');
+          });
+          video.addEventListener('canplay', () => {
+            console.log('canplay');
+          });
+          video.addEventListener('canplaythrough', () => {
+            console.log('canplaythrough');
+          });
+        </script>
+      </body>
+    </html>`;
 }
 
 function getPlaybackId(req: Request) {
@@ -69,6 +74,10 @@ function getPlaybackId(req: Request) {
 
 function getSourceUrl(req: Request) {
   return `https://stream.mux.com/${getPlaybackId(req)}.m3u8`;
+}
+
+function getImageUrl(req: Request) {
+  return `https://image.mux.com/${getPlaybackId(req)}/thumbnail.webp?time=0`;
 }
 
 function getBackgroundVideoAttributes(req: Request) {
@@ -111,10 +120,4 @@ function getAttributes(
   }
 
   return attrs(attributes);
-}
-
-function getBooleanParam(req: Request, param: string) {
-  const searchParams = new URL(req.url).searchParams;
-  const value = searchParams.get(param);
-  return value === '' || value === 'true' || value === '1';
 }

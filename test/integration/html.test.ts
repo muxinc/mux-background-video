@@ -312,7 +312,7 @@ describe('MuxBackgroundVideoElement', () => {
       assert.include(template, 'playsinline');
       assert.include(template, 'disableremoteplayback');
       assert.include(template, 'disablepictureinpicture');
-      assert.include(template, 'object-fit: cover');
+      assert.include(template, 'object-fit: inherit');
     });
 
     it('should serialize attributes correctly', async () => {

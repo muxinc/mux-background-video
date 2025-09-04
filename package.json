@@ -29,9 +29,10 @@
     "build:esm:core": "esbuild src/index.ts --bundle --minify --format=esm --outdir=dist",
     "build:esm:react": "esbuild src/react.tsx --bundle --minify --format=esm --outdir=dist --external:react",
     "build:esm:html": "esbuild src/html.ts --bundle --minify --format=esm --outdir=dist",
-    "types": "tsc",
+    "types": "tsc --outDir dist",
     "watch": "run-p \"types -- -w\" \"build:** -- --watch=forever\"",
-    "start": "(cd examples/vercel-function && npm run start)",
+    "start": "run-p watch start:vercel",
+    "start:vercel": "(cd examples/vercel-function && npm run start)",
     "test": "web-test-runner",
     "test:browserstack": "web-test-runner --config web-test-runner.browserstack.config.mjs",
     "setup:browserstack": "node scripts/setup-browserstack.js"
