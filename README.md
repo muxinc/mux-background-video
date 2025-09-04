@@ -9,9 +9,9 @@ A super lightweight component and HLS engine for creating background videos usin
 - **React**: React component for easy integration
 - **Web Components**: Custom element for easy integration
 - **TypeScript Support**: Full TypeScript definitions included
-- **Lightweight**: Minimal bundle size with no heavy dependencies
+- **Lightweight**: Minimal bundle size with no dependencies
 - **Preload Control**: Control video preloading behavior
-- **Audio Control**: Enable or disable audio tracks for background videos
+- **Audio Control**: Optionally enable audio tracks for background videos
 - **Resolution Control**: Set maximum resolution for optimal performance
 
 
@@ -65,7 +65,7 @@ The easiest way to use Mux Background Video is with the custom element:
 
 You can also import the custom element directly:
 
-```typescript
+```ts
 import 'mux-background-video/html';
 
 // The custom element is automatically registered
@@ -76,7 +76,7 @@ import 'mux-background-video/html';
 
 For React applications, use the React component:
 
-```typescript
+```tsx
 import { MuxBackgroundVideo } from 'mux-background-video/react';
 
 function HeroSection() {
@@ -164,7 +164,7 @@ console.log(element.getAttribute('preload'));
 
 #### Example
 
-```typescript
+```tsx
 <MuxBackgroundVideo
   src="https://stream.mux.com/YOUR_PLAYBACK_ID.m3u8"
   maxResolution="720p"
@@ -246,4 +246,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Support
 
-For issues and questions, please open an issue on GitHub.
+For issues and questions, please [open an issue](./issues/new) on GitHub.
