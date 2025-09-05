@@ -2,7 +2,21 @@
   "name": "@mux/mux-background-video",
   "version": "0.0.1",
   "description": "A super lightweight component and HLS engine for creating background videos using Mux HLS streams.",
+  "author": "@muxinc",
+  "license": "MIT",
+  "homepage": "https://github.com/muxinc/mux-background-video#readme",
+  "bugs": {
+    "url": "https://github.com/muxinc/mux-background-video/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/muxinc/mux-background-video.git"
+  },
   "type": "module",
+  "files": [
+    "src",
+    "dist"
+  ],
   "main": "dist/index.js",
   "types": "dist/types/index.d.ts",
   "exports": {
@@ -37,8 +51,6 @@
     "test:browserstack": "web-test-runner --config web-test-runner.browserstack.config.mjs",
     "setup:browserstack": "node scripts/setup-browserstack.js"
   },
-  "author": "@muxinc",
-  "license": "MIT",
   "devDependencies": {
     "@open-wc/testing": "^4.0.0",
     "@types/mocha": "^10.0.10",
