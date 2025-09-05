@@ -205,8 +205,8 @@ npm start
 - **`npm run build`**: Build the project
 - **`npm run watch`**: Watch for changes and rebuild
 - **`npm test`**: Run tests locally
-- **`npm run test:browserstack`**: Run integration tests on BrowserStack
-- **`npm run setup:browserstack`**: Interactive setup for BrowserStack credentials
+- **`npm run test:saucelabs`**: Run integration tests on Sauce Labs
+- **`npm run setup:saucelabs`**: Interactive setup for Sauce Labs credentials
 
 ### Testing
 

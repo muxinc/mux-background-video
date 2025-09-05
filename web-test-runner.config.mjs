@@ -22,5 +22,6 @@ export default {
   plugins: [
     esbuildPlugin({ ts: true, target: "esnext" })
   ],
+  // @ts-ignore
   filterBrowserLogs: ({ args }) => !args[0]?.startsWith?.('Lit is in dev mode'),
 };
