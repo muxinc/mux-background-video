@@ -1,1 +1,1 @@
-export * from 'mux-background-video/html';
+export * from '@mux/mux-background-video/html';

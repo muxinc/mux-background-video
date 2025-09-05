@@ -1,4 +1,4 @@
-import { MuxBackgroundVideo } from 'mux-background-video/react';
+import { MuxBackgroundVideo } from '@mux/mux-background-video/react';
 
 export default function Home() {
   return (

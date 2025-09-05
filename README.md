@@ -18,7 +18,7 @@ A super lightweight component and HLS engine for creating background videos usin
 ## Installation
 
 ```bash
-npm install mux-background-video
+npm install @mux/mux-background-video
 ```
 
 ## Usage
@@ -51,7 +51,7 @@ The easiest way to use Mux Background Video is with the custom element:
       object-fit: cover;
     }
   </style>
-  <script type="module" src="http://cdn.jsdelivr.net/npm/mux-background-video/html/+esm"></script>
+  <script type="module" src="http://cdn.jsdelivr.net/npm/@mux/mux-background-video/html/+esm"></script>
 </head>
 <body>
   <mux-background-video src="https://stream.mux.com/YOUR_PLAYBACK_ID.m3u8">
@@ -66,7 +66,7 @@ The easiest way to use Mux Background Video is with the custom element:
 You can also import the custom element directly:
 
 ```ts
-import 'mux-background-video/html';
+import '@mux/mux-background-video/html';
 
 // The custom element is automatically registered
 // You can now use <mux-background-video> in your HTML
@@ -77,7 +77,7 @@ import 'mux-background-video/html';
 For React applications, use the React component:
 
 ```tsx
-import { MuxBackgroundVideo } from 'mux-background-video/react';
+import { MuxBackgroundVideo } from '@mux/mux-background-video/react';
 
 function HeroSection() {
   return (

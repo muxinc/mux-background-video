@@ -25,6 +25,6 @@
   },
   "dependencies": {
     "escape-html": "^1.0.3",
-    "mux-background-video": "file:../.."
+    "@mux/mux-background-video": "file:../.."
   }
 }
