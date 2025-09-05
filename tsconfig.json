@@ -9,7 +9,12 @@
     "emitDeclarationOnly": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
-    "preserveWatchOutput": true
+    "preserveWatchOutput": true,
+    "allowJs": true,
+    "checkJs": true,
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx"]
+  "include": [
+    "src/**/*.ts", 
+    "src/**/*.tsx"
+  ]
 }
