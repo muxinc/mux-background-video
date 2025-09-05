@@ -1,3 +1,4 @@
+// @ts-check
 import dotenv from 'dotenv';
 import { esbuildPlugin } from '@web/dev-server-esbuild';
 import { createSauceLabsLauncher } from '@web/test-runner-saucelabs';

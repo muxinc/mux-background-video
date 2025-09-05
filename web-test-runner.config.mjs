@@ -1,3 +1,4 @@
+// @ts-check
 import { esbuildPlugin } from '@web/dev-server-esbuild';
 
 export default {
