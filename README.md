@@ -14,7 +14,6 @@ A super lightweight component and HLS engine for creating background videos usin
 - **Audio Control**: Optionally enable audio tracks for background videos
 - **Resolution Control**: Set maximum resolution for optimal performance
 
-
 ## Installation
 
 ```bash
@@ -22,6 +21,9 @@ npm install @mux/mux-background-video
 ```
 
 ## Usage
+
+> [!IMPORTANT]
+> Requires Mux [Basic video quality](https://www.mux.com/docs/guides/use-video-quality-levels#basic) currently because transmuxing of `.ts` segments is not supported.
 
 ### HTMLCustom Element
 
