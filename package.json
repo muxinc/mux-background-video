@@ -1,6 +1,6 @@
 {
   "name": "@mux/mux-background-video",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "A super lightweight component and HLS engine for creating background videos using Mux HLS streams.",
   "author": "@muxinc",
   "license": "MIT",
