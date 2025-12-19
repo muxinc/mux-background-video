@@ -47,31 +47,6 @@ export default function VimeoIframePage() {
             width: 177.77777778vh;
             pointer-events: none;
           }
-          
-          .content {
-            position: relative;
-            z-index: 1;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            text-align: center;
-            padding: 2rem;
-          }
-          
-          .content h1 {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-          }
-          
-          .content p {
-            font-size: 1.25rem;
-            max-width: 600px;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-          }
         `,
         }}
       />
@@ -83,14 +58,6 @@ export default function VimeoIframePage() {
           title="Vimeo Background Video"
         />
       </div>
-      <div className="content">
-        <h1>Vimeo Background Video</h1>
-        <p>
-          This page demonstrates a Vimeo player used as a background video.
-          The video is set to autoplay, loop, and be muted.
-        </p>
-      </div>
     </>
   );
 }
-

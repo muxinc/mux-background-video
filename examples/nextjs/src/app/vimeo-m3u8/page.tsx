@@ -37,7 +37,7 @@ export default async function VimeoM3U8Page() {
       />
       <MuxBackgroundVideo src={m3u8Url}>
         <img
-          src="https://i.vimeocdn.com/video/1234567890-abc123def456-640x360.jpg"
+          src="./vimeo-poster.webp"
           alt="Vimeo Background Video"
         />
       </MuxBackgroundVideo>
