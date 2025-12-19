@@ -7,6 +7,7 @@ async function getVimeoM3U8Url() {
     const response = await fetch(vimeoUrl, {
       method: 'HEAD',
       redirect: 'follow',
+      cache: 'no-store', // Don't cache the redirect URL
     });
     
     if (!response.ok) {
