@@ -31,28 +31,56 @@ export default function VimeoM3U8Client({ m3u8Url }: VimeoM3U8ClientProps) {
     };
   }, []);
 
-  // Fetch total webpage size via API
+  // Fetch JS import size directly from CDN
   useEffect(() => {
     const fetchSize = async () => {
       try {
-        const currentUrl = window.location.href;
-        const response = await fetch('/api/measure-size', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            url: currentUrl,
-          }),
-        });
+        const modulePath = '@mux/mux-background-video/react';
+        // Resolve module path to CDN URL
+        // For @mux/mux-background-video/react, the package exports "./react" -> "./dist/react.js"
+        const packageName = modulePath.split('/').slice(0, -1).join('/'); // '@mux/mux-background-video'
+        const subPath = modulePath.split('/').pop(); // 'react'
         
-        if (response.ok) {
-          const data = await response.json();
-          setTotalSize(data.size || 0);
-          setSizeLoading(false);
+        // Try different CDN URL formats
+        const urls = [
+          `https://cdn.jsdelivr.net/npm/${packageName}/dist/${subPath}.js`,
+          `https://unpkg.com/${packageName}/dist/${subPath}.js`,
+          `https://cdn.jsdelivr.net/npm/${packageName}@latest/dist/${subPath}.js`,
+          `https://unpkg.com/${packageName}@latest/dist/${subPath}.js`,
+        ];
+        
+        let size = 0;
+        
+        for (const moduleUrl of urls) {
+          try {
+            const response = await fetch(moduleUrl, {
+              method: 'HEAD',
+              redirect: 'follow',
+            });
+            
+            if (response.ok) {
+              const contentLength = response.headers.get('content-length');
+              if (contentLength) {
+                size = parseInt(contentLength, 10);
+                if (!isNaN(size) && size > 0) {
+                  setTotalSize(size);
+                  setSizeLoading(false);
+                  return;
+                }
+              }
+            }
+          } catch (err) {
+            // Try next URL
+            continue;
+          }
         }
+        
+        // If all URLs failed, set size to 0
+        setTotalSize(0);
+        setSizeLoading(false);
       } catch (error) {
-        console.error('Error fetching size:', error);
+        console.error('Error fetching module size:', error);
+        setSizeLoading(false);
       }
     };
 
@@ -98,10 +126,10 @@ export default function VimeoM3U8Client({ m3u8Url }: VimeoM3U8ClientProps) {
   };
 
   const formatSize = (bytes: number) => {
-    if (bytes === 0) return '0 B';
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+    if (bytes === 0) return '0B';
+    if (bytes < 1024) return `${bytes}B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)}KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(2)}MB`;
   };
 
   return (

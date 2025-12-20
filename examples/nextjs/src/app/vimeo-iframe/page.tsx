@@ -26,25 +26,12 @@ export default function VimeoIframePage() {
     };
   }, []);
 
-  // Fetch total webpage size via API
+  // Fetch total iframe size via API
   useEffect(() => {
     const fetchSize = async () => {
       try {
-        const currentUrl = window.location.href;
         const iframeSrc = iframeRef.current?.src || 'https://player.vimeo.com/video/468763311?background=1&playsinline=1&responsive=0';
-        
-        // Fetch main page size
-        const mainResponse = await fetch('/api/measure-size', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            url: currentUrl,
-          }),
-        });
-        
-        // Fetch iframe page size
+
         const iframeResponse = await fetch('/api/measure-size', {
           method: 'POST',
           headers: {
@@ -57,11 +44,6 @@ export default function VimeoIframePage() {
         });
         
         let totalSize = 0;
-        
-        if (mainResponse.ok) {
-          const mainData = await mainResponse.json();
-          totalSize += mainData.size || 0;
-        }
         
         if (iframeResponse.ok) {
           const iframeData = await iframeResponse.json();
@@ -127,10 +109,10 @@ export default function VimeoIframePage() {
   };
 
   const formatSize = (bytes: number) => {
-    if (bytes === 0) return '0 B';
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+    if (bytes === 0) return '0B';
+    if (bytes < 1024) return `${bytes}B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)}KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(2)}MB`;
   };
 
   return (
