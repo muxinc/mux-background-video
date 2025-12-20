@@ -71,12 +71,13 @@ export default function VimeoIframePage() {
       }
 
       if (data && data.event === 'ready') {
-        iframeRef.current?.contentWindow?.postMessage({ method: 'ping' }, event.origin);
+        // Vimeo is ready, now we can send postMessage
         iframeRef.current?.contentWindow?.postMessage({ method: 'addEventListener', value: 'playing' }, event.origin);
+        iframeRef.current?.contentWindow?.postMessage({ method: 'addEventListener', value: 'timeupdate' }, event.origin);
       }
       
       // Check if the message indicates the video is playing
-      if (data && data.event === 'playing') {
+      if (data && (data.event === 'playing' || data.event === 'timeupdate')) {
         if (!iframeLoadedRef.current) {
           iframeLoadedRef.current = true;
           setPlayingTime(Date.now() - startTimeRef.current);
@@ -93,6 +94,8 @@ export default function VimeoIframePage() {
     };
 
     window.addEventListener('message', handleMessage);
+    iframeRef.current?.contentWindow?.postMessage({ method: 'addEventListener', value: 'playing' }, '*');
+    iframeRef.current?.contentWindow?.postMessage({ method: 'addEventListener', value: 'timeupdate' }, '*');
 
     return () => {
       window.removeEventListener('message', handleMessage);
