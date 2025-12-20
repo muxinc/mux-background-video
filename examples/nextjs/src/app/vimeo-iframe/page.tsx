@@ -5,11 +5,12 @@ import { useEffect, useRef, useState } from 'react';
 export default function VimeoIframePage() {
   const [playingTime, setPlayingTime] = useState<number>(0);
   const [totalSize, setTotalSize] = useState<number>(0);
-  const [sizeLoading, setSizeLoading] = useState<boolean>(true);
+  const [sizeLoading, setSizeLoading] = useState<boolean>(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const startTimeRef = useRef<number>(Date.now());
   const iframeLoadedRef = useRef(false);
   const iframeIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const sizeFetchedRef = useRef(false);
 
   // Count up timer
   useEffect(() => {
@@ -26,46 +27,42 @@ export default function VimeoIframePage() {
     };
   }, []);
 
-  // Fetch total iframe size via API
-  useEffect(() => {
-    const fetchSize = async () => {
-      try {
-        const iframeSrc = iframeRef.current?.src || 'https://player.vimeo.com/video/468763311?background=1&playsinline=1&responsive=0';
-
-        const iframeResponse = await fetch('/api/measure-size', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            url: iframeSrc,
-            js: true,
-          }),
-        });
-        
-        let totalSize = 0;
-        
-        if (iframeResponse.ok) {
-          const iframeData = await iframeResponse.json();
-          totalSize += iframeData.size || 0;
-        }
-        
-        setTotalSize(totalSize);
-        setSizeLoading(false);
-      } catch (error) {
-        console.error('Error fetching size:', error);
-      }
-    };
-
-    // Wait a bit for page to load, then fetch
-    const timeout = setTimeout(fetchSize, 2000);
+  // Fetch total iframe size via API (triggered when playing event fires)
+  const fetchSize = async () => {
+    if (sizeFetchedRef.current) return;
+    sizeFetchedRef.current = true;
+    setSizeLoading(true);
     
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, []);
+    try {
+      const iframeSrc = iframeRef.current?.src || 'https://player.vimeo.com/video/468763311?background=1&playsinline=1&responsive=0';
 
-  // Track iframe play time via postMessage
+      const iframeResponse = await fetch('/api/measure-size', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url: iframeSrc,
+          js: true,
+        }),
+      });
+      
+      let totalSize = 0;
+      
+      if (iframeResponse.ok) {
+        const iframeData = await iframeResponse.json();
+        totalSize += iframeData.size || 0;
+      }
+      
+      setTotalSize(totalSize);
+      setSizeLoading(false);
+    } catch (error) {
+      console.error('Error fetching size:', error);
+      setSizeLoading(false);
+    }
+  };
+
+  // Track iframe play time via postMessage and trigger size fetch
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       // Only accept messages from Vimeo
@@ -93,6 +90,9 @@ export default function VimeoIframePage() {
           if (iframeIntervalRef.current) {
             clearInterval(iframeIntervalRef.current);
           }
+          
+          // Start fetching size when playing
+          fetchSize();
         } 
       }
     };

@@ -10,11 +10,12 @@ interface VimeoM3U8ClientProps {
 export default function VimeoM3U8Client({ m3u8Url }: VimeoM3U8ClientProps) {
   const [playingTime, setPlayingTime] = useState<number>(0);
   const [totalSize, setTotalSize] = useState<number>(0);
-  const [sizeLoading, setSizeLoading] = useState<boolean>(true);
+  const [sizeLoading, setSizeLoading] = useState<boolean>(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const startTimeRef = useRef<number>(Date.now());
   const m3u8LoadedRef = useRef(false);
   const m3u8IntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const sizeFetchedRef = useRef(false);
 
   // Count up timer
   useEffect(() => {
@@ -31,68 +32,63 @@ export default function VimeoM3U8Client({ m3u8Url }: VimeoM3U8ClientProps) {
     };
   }, []);
 
-  // Fetch JS import size directly from CDN
-  useEffect(() => {
-    const fetchSize = async () => {
-      try {
-        const modulePath = '@mux/mux-background-video/react';
-        // Resolve module path to CDN URL
-        // For @mux/mux-background-video/react, the package exports "./react" -> "./dist/react.js"
-        const packageName = modulePath.split('/').slice(0, -1).join('/'); // '@mux/mux-background-video'
-        const subPath = modulePath.split('/').pop(); // 'react'
-        
-        // Try different CDN URL formats
-        const urls = [
-          `https://cdn.jsdelivr.net/npm/${packageName}/dist/${subPath}.js`,
-          `https://unpkg.com/${packageName}/dist/${subPath}.js`,
-          `https://cdn.jsdelivr.net/npm/${packageName}@latest/dist/${subPath}.js`,
-          `https://unpkg.com/${packageName}@latest/dist/${subPath}.js`,
-        ];
-        
-        let size = 0;
-        
-        for (const moduleUrl of urls) {
-          try {
-            const response = await fetch(moduleUrl, {
-              method: 'HEAD',
-              redirect: 'follow',
-            });
-            
-            if (response.ok) {
-              const contentLength = response.headers.get('content-length');
-              if (contentLength) {
-                size = parseInt(contentLength, 10);
-                if (!isNaN(size) && size > 0) {
-                  setTotalSize(size);
-                  setSizeLoading(false);
-                  return;
-                }
+  // Fetch JS import size directly from CDN (triggered when playing event fires)
+  const fetchSize = async () => {
+    if (sizeFetchedRef.current) return;
+    sizeFetchedRef.current = true;
+    setSizeLoading(true);
+    
+    try {
+      const modulePath = '@mux/mux-background-video/react';
+      // Resolve module path to CDN URL
+      // For @mux/mux-background-video/react, the package exports "./react" -> "./dist/react.js"
+      const packageName = modulePath.split('/').slice(0, -1).join('/'); // '@mux/mux-background-video'
+      const subPath = modulePath.split('/').pop(); // 'react'
+      
+      // Try different CDN URL formats
+      const urls = [
+        `https://cdn.jsdelivr.net/npm/${packageName}/dist/${subPath}.js`,
+        `https://unpkg.com/${packageName}/dist/${subPath}.js`,
+        `https://cdn.jsdelivr.net/npm/${packageName}@latest/dist/${subPath}.js`,
+        `https://unpkg.com/${packageName}@latest/dist/${subPath}.js`,
+      ];
+      
+      let size = 0;
+      
+      for (const moduleUrl of urls) {
+        try {
+          const response = await fetch(moduleUrl, {
+            method: 'HEAD',
+            redirect: 'follow',
+          });
+          
+          if (response.ok) {
+            const contentLength = response.headers.get('content-length');
+            if (contentLength) {
+              size = parseInt(contentLength, 10);
+              if (!isNaN(size) && size > 0) {
+                setTotalSize(size);
+                setSizeLoading(false);
+                return;
               }
             }
-          } catch (err) {
-            // Try next URL
-            continue;
           }
+        } catch (err) {
+          // Try next URL
+          continue;
         }
-        
-        // If all URLs failed, set size to 0
-        setTotalSize(0);
-        setSizeLoading(false);
-      } catch (error) {
-        console.error('Error fetching module size:', error);
-        setSizeLoading(false);
       }
-    };
+      
+      // If all URLs failed, set size to 0
+      setTotalSize(0);
+      setSizeLoading(false);
+    } catch (error) {
+      console.error('Error fetching module size:', error);
+      setSizeLoading(false);
+    }
+  };
 
-    // Wait a bit for page to load, then fetch
-    const timeout = setTimeout(fetchSize, 2000);
-    
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, []);
-
-  // Track m3u8 video playing time
+  // Track m3u8 video playing time and trigger size fetch
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -106,6 +102,9 @@ export default function VimeoM3U8Client({ m3u8Url }: VimeoM3U8ClientProps) {
         if (m3u8IntervalRef.current) {
           clearInterval(m3u8IntervalRef.current);
         }
+        
+        // Start fetching size when playing
+        fetchSize();
       }
     };
 
