@@ -1,0 +1,223 @@
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+import { MuxBackgroundVideo } from '@mux/mux-background-video/react';
+
+interface VimeoM3U8ClientProps {
+  m3u8Url: string;
+}
+
+export default function VimeoM3U8Client({ m3u8Url }: VimeoM3U8ClientProps) {
+  const [playingTime, setPlayingTime] = useState<number>(0);
+  const [totalSize, setTotalSize] = useState<number>(0);
+  const [sizeLoading, setSizeLoading] = useState<boolean>(true);
+  const m3u8WrapperRef = useRef<HTMLDivElement>(null);
+  const startTimeRef = useRef<number>(Date.now());
+  const m3u8LoadedRef = useRef(false);
+  const m3u8IntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Count up timer
+  useEffect(() => {
+    m3u8IntervalRef.current = setInterval(() => {
+      if (!m3u8LoadedRef.current) {
+        setPlayingTime(Date.now() - startTimeRef.current);
+      }
+    }, 10);
+
+    return () => {
+      if (m3u8IntervalRef.current) {
+        clearInterval(m3u8IntervalRef.current);
+      }
+    };
+  }, []);
+
+  // Fetch total webpage size via API
+  useEffect(() => {
+    const fetchSize = async () => {
+      try {
+        const currentUrl = window.location.href;
+        const response = await fetch('/api/measure-size', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            url: currentUrl,
+          }),
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setTotalSize(data.size || 0);
+          setSizeLoading(false);
+        }
+      } catch (error) {
+        console.error('Error fetching size:', error);
+      }
+    };
+
+    // Wait a bit for page to load, then fetch
+    const timeout = setTimeout(fetchSize, 2000);
+    
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, []);
+
+  // Track m3u8 video playing time
+  useEffect(() => {
+    const wrapper = m3u8WrapperRef.current;
+    if (!wrapper) return;
+
+    let cleanup: (() => void) | null = null;
+
+    // Find the video element inside the MuxBackgroundVideo wrapper
+    const findVideo = () => {
+      return wrapper.querySelector('video') as HTMLVideoElement | null;
+    };
+
+    const setupVideoListeners = (video: HTMLVideoElement) => {
+      const handlePlaying = () => {
+        if (!m3u8LoadedRef.current) {
+          m3u8LoadedRef.current = true;
+          setPlayingTime(Date.now() - startTimeRef.current);
+          
+          // Stop counting
+          if (m3u8IntervalRef.current) {
+            clearInterval(m3u8IntervalRef.current);
+          }
+        }
+      };
+
+      video.addEventListener('playing', handlePlaying);
+      
+      // Also check if already playing
+      if (!video.paused && video.readyState >= 3) {
+        handlePlaying();
+      }
+
+      return () => {
+        video.removeEventListener('playing', handlePlaying);
+      };
+    };
+
+    // Try to find video immediately
+    const video = findVideo();
+    if (video) {
+      cleanup = setupVideoListeners(video);
+    } else {
+      // Use MutationObserver to watch for when video is added
+      const observer = new MutationObserver(() => {
+        const foundVideo = findVideo();
+        if (foundVideo && !m3u8LoadedRef.current && !cleanup) {
+          cleanup = setupVideoListeners(foundVideo);
+        }
+      });
+
+      observer.observe(wrapper, {
+        childList: true,
+        subtree: true,
+      });
+
+      return () => {
+        observer.disconnect();
+        if (cleanup) cleanup();
+      };
+    }
+
+    return () => {
+      if (cleanup) cleanup();
+    };
+  }, []);
+
+  const formatTime = (ms: number) => {
+    return `${(ms / 1000).toFixed(2)}s`;
+  };
+
+  const formatSize = (bytes: number) => {
+    if (bytes === 0) return '0 B';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  };
+
+  return (
+    <>
+      <style
+        dangerouslySetInnerHTML={{
+          __html: /*css*/ `
+          html,
+          body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+          }
+
+          .mux-background-video {
+            width: 100%;
+            height: 100%;
+          }
+
+          .player-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            z-index: 10;
+          }
+          
+          .player-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+          }
+          
+          .player-timer {
+            font-size: 1.25rem;
+            font-family: monospace;
+          }
+          
+          .player-size {
+            font-size: 1rem;
+            font-family: monospace;
+            opacity: 0.9;
+            margin-top: 0.5rem;
+          }
+          
+          .player-size.loading {
+            animation: fadeInOut 1.5s ease-in-out infinite;
+          }
+          
+          @keyframes fadeInOut {
+            0%, 100% {
+              opacity: 0.3;
+            }
+            50% {
+              opacity: 0.9;
+            }
+          }
+        `,
+        }}
+      />
+      <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
+        <div ref={m3u8WrapperRef} style={{ width: '100%', height: '100%' }}>
+          <MuxBackgroundVideo src={m3u8Url}></MuxBackgroundVideo>
+        </div>
+        <div className="player-info">
+          <div className="player-title">Mux BGV w/ Vimeo m3u8</div>
+          <div className="player-timer">
+            {formatTime(playingTime)}
+          </div>
+          <div className={`player-size ${sizeLoading ? 'loading' : ''}`}>
+            {formatSize(totalSize)}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
