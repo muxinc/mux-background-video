@@ -1,3 +1,12 @@
+# [0.2.0](https://github.com/muxinc/mux-background-video/compare/v0.1.0...v0.2.0) (2025-12-20)
+
+
+### Features
+
+* expose video ref in react component ([#31](https://github.com/muxinc/mux-background-video/issues/31)) ([2acad89](https://github.com/muxinc/mux-background-video/commit/2acad89ddfa2ead26fab9afde5d68f718c9ed1ce))
+
+
+
 # 0.1.0 (2025-09-06)
 
 
