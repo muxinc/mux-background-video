@@ -128,7 +128,14 @@ export async function POST(request: NextRequest) {
 
       await browser.close();
 
-      return NextResponse.json({ size: totalSize });
+      return NextResponse.json(
+        { size: totalSize },
+        {
+          headers: {
+            'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+          },
+        }
+      );
     } catch (error) {
       await browser.close();
       throw error;
