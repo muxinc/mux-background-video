@@ -4,8 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 
 export default function VimeoIframePage() {
   const [playingTime, setPlayingTime] = useState<number>(0);
-  const [totalSize, setTotalSize] = useState<number>(0);
-  const [sizeLoading, setSizeLoading] = useState<boolean>(false);
+  const [totalSize, setTotalSize] = useState<number>(0);  const [sizeLoading, setSizeLoading] = useState<boolean>(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const startTimeRef = useRef<number>(Date.now());
   const iframeLoadedRef = useRef(false);
@@ -36,16 +35,12 @@ export default function VimeoIframePage() {
     try {
       const iframeSrc = iframeRef.current?.src || 'https://player.vimeo.com/video/468763311?background=1&playsinline=1&responsive=0';
 
-      const iframeResponse = await fetch('/api/measure-size', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          url: iframeSrc,
-          js: true,
-        }),
+      const params = new URLSearchParams({
+        url: iframeSrc,
+        js: 'true',
       });
+      
+      const iframeResponse = await fetch(`/api/measure-size?${params.toString()}`);
       
       let totalSize = 0;
       
