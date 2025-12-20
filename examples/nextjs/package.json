@@ -8,19 +8,22 @@
     "start": "next start"
   },
   "dependencies": {
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
+    "@mux/mux-background-video": "file:../..",
+    "@sparticuz/chromium-min": "^143.0.0",
     "next": "16.1.0",
-    "@mux/mux-background-video": "file:../.."
+    "puppeteer-core": "^24.34.0",
+    "react": "19.2.3",
+    "react-dom": "19.2.3"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@tailwindcss/postcss": "^4",
     "@types/node": "^24",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
     "eslint": "^9",
     "eslint-config-next": "16.1.0",
-    "tailwindcss": "^4"
+    "puppeteer": "^24.34.0",
+    "tailwindcss": "^4",
+    "typescript": "^5"
   }
 }

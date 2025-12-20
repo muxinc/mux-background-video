@@ -1,28 +1,46 @@
-import VimeoComparisonClient from './client';
+'use client';
 
-async function getVimeoM3U8Url() {
-  const vimeoUrl = 'https://player.vimeo.com/external/468763311.m3u8?s=861ef37389d1ad00b64a4e04665a7bffd4bfdc78&f=fmp4';
-  
-  try {
-    const response = await fetch(vimeoUrl, {
-      method: 'HEAD',
-      redirect: 'follow',
-      cache: 'no-store', // Don't cache the redirect URL
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch: ${response.status}`);
-    }
-    
-    return response.url;
-  } catch (error) {
-    console.error('Error fetching Vimeo m3u8 redirect:', error);
-    throw error;
-  }
-}
-
-export default async function VimeoComparisonPage() {
-  const m3u8Url = await getVimeoM3U8Url();
-
-  return <VimeoComparisonClient m3u8Url={m3u8Url} />;
+export default function VimeoComparisonPage() {
+  return (
+    <>
+      <style
+        dangerouslySetInnerHTML={{
+          __html: /*css*/ `
+          html,
+          body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+          }
+          
+          .comparison-container {
+            display: flex;
+            width: 100%;
+            height: 100vh;
+          }
+          
+          .comparison-iframe {
+            flex: 1;
+            width: 50%;
+            height: 100%;
+            border: none;
+          }
+        `,
+        }}
+      />
+      <div className="comparison-container">
+        <iframe
+          className="comparison-iframe"
+          src="/vimeo-iframe"
+          title="Vimeo iFrame"
+        />
+        <iframe
+          className="comparison-iframe"
+          src="/vimeo-m3u8"
+          title="Mux BGV w/ Vimeo m3u8"
+        />
+      </div>
+    </>
+  );
 }

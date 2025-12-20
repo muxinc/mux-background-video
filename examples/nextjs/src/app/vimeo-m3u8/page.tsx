@@ -1,7 +1,7 @@
-import { MuxBackgroundVideo } from '@mux/mux-background-video/react';
+import VimeoM3U8Client from './client';
 
 async function getVimeoM3U8Url() {
-  const vimeoUrl = 'https://player.vimeo.com/external/606618627.m3u8?s=59fffd516ccadf0d88a3199f9c1c336f49a935b7&f=fmp4';
+  const vimeoUrl = 'https://player.vimeo.com/external/468763311.m3u8?s=861ef37389d1ad00b64a4e04665a7bffd4bfdc78&f=fmp4';
   
   try {
     const response = await fetch(vimeoUrl, {
@@ -24,24 +24,5 @@ async function getVimeoM3U8Url() {
 export default async function VimeoM3U8Page() {
   const m3u8Url = await getVimeoM3U8Url();
 
-  return (
-    <>
-      <style
-        dangerouslySetInnerHTML={{
-          __html: /*css*/ `
-          html,
-          body {
-            height: 100%;
-          }
-        `,
-        }}
-      />
-      <MuxBackgroundVideo src={m3u8Url}>
-        <img
-          src="./vimeo-poster.webp"
-          alt="Vimeo Background Video"
-        />
-      </MuxBackgroundVideo>
-    </>
-  );
+  return <VimeoM3U8Client m3u8Url={m3u8Url} />;
 }
