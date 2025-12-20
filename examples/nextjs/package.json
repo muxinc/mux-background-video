@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
-    "start": "next start"
+    "start": "next start",
+    "postinstall": "node scripts/postinstall.mjs"
   },
   "dependencies": {
     "@mux/mux-background-video": "file:../..",
@@ -16,6 +17,7 @@
     "react-dom": "19.2.3"
   },
   "devDependencies": {
+    "@sparticuz/chromium": "^143.0.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^24",
     "@types/react": "^19",
