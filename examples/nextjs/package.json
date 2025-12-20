@@ -10,14 +10,14 @@
   },
   "dependencies": {
     "@mux/mux-background-video": "file:../..",
-    "@sparticuz/chromium-min": "^143.0.0",
+    "@sparticuz/chromium-min": "141.0.0",
     "next": "16.1.0",
-    "puppeteer-core": "^24.34.0",
+    "puppeteer-core": "23.11.1",
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },
   "devDependencies": {
-    "@sparticuz/chromium": "^143.0.0",
+    "@sparticuz/chromium": "141.0.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^24",
     "@types/react": "^19",
