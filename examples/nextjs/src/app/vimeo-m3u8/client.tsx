@@ -11,7 +11,7 @@ export default function VimeoM3U8Client({ m3u8Url }: VimeoM3U8ClientProps) {
   const [playingTime, setPlayingTime] = useState<number>(0);
   const [totalSize, setTotalSize] = useState<number>(0);
   const [sizeLoading, setSizeLoading] = useState<boolean>(true);
-  const m3u8WrapperRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const startTimeRef = useRef<number>(Date.now());
   const m3u8LoadedRef = useRef(false);
   const m3u8IntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -66,67 +66,30 @@ export default function VimeoM3U8Client({ m3u8Url }: VimeoM3U8ClientProps) {
 
   // Track m3u8 video playing time
   useEffect(() => {
-    const wrapper = m3u8WrapperRef.current;
-    if (!wrapper) return;
-
-    let cleanup: (() => void) | null = null;
-
-    // Find the video element inside the MuxBackgroundVideo wrapper
-    const findVideo = () => {
-      return wrapper.querySelector('video') as HTMLVideoElement | null;
-    };
-
-    const setupVideoListeners = (video: HTMLVideoElement) => {
-      const handlePlaying = () => {
-        if (!m3u8LoadedRef.current) {
-          m3u8LoadedRef.current = true;
-          setPlayingTime(Date.now() - startTimeRef.current);
-          
-          // Stop counting
-          if (m3u8IntervalRef.current) {
-            clearInterval(m3u8IntervalRef.current);
-          }
+    const video = videoRef.current;
+    if (!video) return;
+    
+    const handlePlaying = () => {
+      if (!m3u8LoadedRef.current) {
+        m3u8LoadedRef.current = true;
+        setPlayingTime(Date.now() - startTimeRef.current);
+        
+        // Stop counting
+        if (m3u8IntervalRef.current) {
+          clearInterval(m3u8IntervalRef.current);
         }
-      };
-
-      video.addEventListener('playing', handlePlaying);
-      
-      // Also check if already playing
-      if (!video.paused && video.readyState >= 3) {
-        handlePlaying();
       }
-
-      return () => {
-        video.removeEventListener('playing', handlePlaying);
-      };
     };
 
-    // Try to find video immediately
-    const video = findVideo();
-    if (video) {
-      cleanup = setupVideoListeners(video);
-    } else {
-      // Use MutationObserver to watch for when video is added
-      const observer = new MutationObserver(() => {
-        const foundVideo = findVideo();
-        if (foundVideo && !m3u8LoadedRef.current && !cleanup) {
-          cleanup = setupVideoListeners(foundVideo);
-        }
-      });
-
-      observer.observe(wrapper, {
-        childList: true,
-        subtree: true,
-      });
-
-      return () => {
-        observer.disconnect();
-        if (cleanup) cleanup();
-      };
+    video.addEventListener('playing', handlePlaying);
+    
+    // Also check if already playing
+    if (!video.paused && video.readyState >= 3) {
+      handlePlaying();
     }
 
     return () => {
-      if (cleanup) cleanup();
+      video.removeEventListener('playing', handlePlaying);
     };
   }, []);
 
@@ -205,8 +168,8 @@ export default function VimeoM3U8Client({ m3u8Url }: VimeoM3U8ClientProps) {
         }}
       />
       <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
-        <div ref={m3u8WrapperRef} style={{ width: '100%', height: '100%' }}>
-          <MuxBackgroundVideo src={m3u8Url}></MuxBackgroundVideo>
+        <div style={{ width: '100%', height: '100%' }}>
+          <MuxBackgroundVideo ref={videoRef} src={m3u8Url}></MuxBackgroundVideo>
         </div>
         <div className="player-info">
           <div className="player-title">Mux BGV w/ Vimeo m3u8</div>
