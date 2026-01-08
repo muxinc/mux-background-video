@@ -17,6 +17,7 @@ A super lightweight component and HLS engine for creating background videos usin
 ## Installation
 
 ```bash
+npm install mux-embed # Enable Mux Data integration
 npm install @mux/mux-background-video
 ```
 
@@ -53,7 +54,10 @@ The easiest way to use Mux Background Video is with the custom element:
       object-fit: cover;
     }
   </style>
-  <script type="module" src="http://cdn.jsdelivr.net/npm/@mux/mux-background-video/html/+esm"></script>
+
+  <!-- (optional) Enable Mux Data integration -->
+  <script defer src="https://cdn.jsdelivr.net/npm/mux-embed"></script>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@mux/mux-background-video/html/+esm"></script>
 </head>
 <body>
   <mux-background-video src="https://stream.mux.com/YOUR_PLAYBACK_ID.m3u8">
@@ -68,6 +72,7 @@ The easiest way to use Mux Background Video is with the custom element:
 You can also import the custom element directly:
 
 ```ts
+import 'mux-embed'; // (optional) Enable Mux Data integration
 import '@mux/mux-background-video/html';
 
 // The custom element is automatically registered
@@ -79,6 +84,7 @@ import '@mux/mux-background-video/html';
 For React applications, use the React component:
 
 ```tsx
+import 'mux-embed'; // (optional) Enable Mux Data integration
 import { MuxBackgroundVideo } from '@mux/mux-background-video/react';
 
 function HeroSection() {
@@ -92,14 +98,11 @@ function HeroSection() {
 
 ## Mux Data Integration
 
-To enable [Mux data](https://www.mux.com/data) collection for your background videos, include the Mux embed script in your HTML page before the Mux Background Video script:
+[Mux data](https://www.mux.com/data) integrates with video players to provide detailed analytics and insights about video performance, which can be found in the Mux dashboard. Mux can also use this performance data to help improve the player and streaming. All that's required to use Mux data is including or importing the script. Once the script is included, Mux data will automatically be enabled for all background videos on the page.
 
 ```html
 <script defer src="https://cdn.jsdelivr.net/npm/mux-embed"></script>
 ```
-
-Once this script is included, Mux data will automatically be enabled for all background videos on the page, providing you with detailed analytics and insights about video performance.
-
 
 ## API Reference
 
