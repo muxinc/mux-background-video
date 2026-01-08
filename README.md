@@ -55,7 +55,7 @@ The easiest way to use Mux Background Video is with the custom element:
     }
   </style>
   <script defer src="https://cdn.jsdelivr.net/npm/mux-embed"></script>
-  <script type="module" src="http://cdn.jsdelivr.net/npm/@mux/mux-background-video/html/+esm"></script>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@mux/mux-background-video/html/+esm"></script>
 </head>
 <body>
   <mux-background-video src="https://stream.mux.com/YOUR_PLAYBACK_ID.m3u8">
