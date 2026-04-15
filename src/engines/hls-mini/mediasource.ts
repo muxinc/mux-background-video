@@ -41,8 +41,11 @@ export const loadMedia = (
       initLoadSegments(mediaPlaylists, mediaSource, mediaEl, config, signal);
     })
     .catch((error) => {
-      if (error === 'unload') return;
-      throw error;
+      if (error === 'unload' || signal.aborted) return;
+      // Surface the failure instead of re-throwing as an unhandled rejection.
+      // The load loop is never started when this fires, so there is no
+      // infinite retry to stop — this is purely about visibility.
+      console.error('[mux-background-video] failed to load source:', error);
     });
 
   return unload;
@@ -117,7 +120,7 @@ const initLoadSegments = (
   signal: AbortSignal
 ) => {
   let isLoading = false;
-  let checkInterval: NodeJS.Timeout;
+  let checkInterval: ReturnType<typeof setInterval>;
   let initSegments = getInitSegments(mediaPlaylists);
 
   const loadNextSegments = async () => {

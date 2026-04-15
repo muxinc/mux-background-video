@@ -126,7 +126,31 @@ export const getMediaPlaylist = async <T extends Rendition>(
   const segments = addSegmentStartAndEndTimes(
     await getPlaylistFromURI(mediaPlaylistData.uri, MediaPlaylistReducerTuples, signal)
   );
+  assertFmp4Segments(segments);
   return { ...mediaPlaylistData, segments };
+};
+
+// This engine only supports fMP4 (CMAF) segments. MPEG-TS playlists, served by
+// Mux's Plus tier and other classic HLS sources, lack an `#EXT-X-MAP` init
+// segment and use `.ts` segment URIs. Bail out early with a typed error rather
+// than letting MSE silently reject the appended bytes.
+const assertFmp4Segments = (segments: Segment[]) => {
+  if (segments.length === 0) return;
+  const hasInitSegment = segments.some((s) => (s.duration || 0) === 0 && !!s.uri);
+  if (hasInitSegment) return;
+
+  const firstMediaSegment = segments.find((s) => (s.duration || 0) > 0 && !!s.uri);
+  const uri = firstMediaSegment?.uri ?? '';
+  const looksLikeMpegTs = /\.ts(\?|$)/i.test(new URL(uri).pathname);
+
+  if (looksLikeMpegTs || !hasInitSegment) {
+    throw new Error(
+      'Unsupported HLS segment format: this engine requires fMP4 (CMAF) segments ' +
+      'but the playlist contains MPEG-TS (.ts) segments. For Mux streams, use ' +
+      'Basic or Premium video quality. See ' +
+      'https://www.mux.com/docs/guides/use-video-quality-levels'
+    );
+  }
 };
 
 const addSegmentStartAndEndTimes = (segments: Segment[]) => {
