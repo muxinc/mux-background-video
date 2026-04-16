@@ -130,27 +130,31 @@ export const getMediaPlaylist = async <T extends Rendition>(
   return { ...mediaPlaylistData, segments };
 };
 
-// This engine only supports fMP4 (CMAF) segments. MPEG-TS playlists, served by
-// Mux's Plus tier and other classic HLS sources, lack an `#EXT-X-MAP` init
-// segment and use `.ts` segment URIs. Bail out early with a typed error rather
-// than letting MSE silently reject the appended bytes.
+// This engine only supports fMP4 (CMAF) segments, which always include an
+// `#EXT-X-MAP` init segment. MPEG-TS playlists (Mux Plus tier, classic HLS)
+// lack that init segment. Bail out early with a clear error rather than
+// letting MSE silently reject the appended bytes.
 const assertFmp4Segments = (segments: Segment[]) => {
   if (segments.length === 0) return;
   const hasInitSegment = segments.some((s) => (s.duration || 0) === 0 && !!s.uri);
   if (hasInitSegment) return;
 
-  const firstMediaSegment = segments.find((s) => (s.duration || 0) > 0 && !!s.uri);
-  const uri = firstMediaSegment?.uri ?? '';
-  const looksLikeMpegTs = /\.ts(\?|$)/i.test(new URL(uri).pathname);
-
-  if (looksLikeMpegTs || !hasInitSegment) {
-    throw new Error(
-      'Unsupported HLS segment format: this engine requires fMP4 (CMAF) segments ' +
-      'but the playlist contains MPEG-TS (.ts) segments. For Mux streams, use ' +
-      'Basic or Premium video quality. See ' +
-      'https://www.mux.com/docs/guides/use-video-quality-levels'
-    );
+  // No init segment → not fMP4. Check URIs to give a more specific message.
+  const firstUri = segments.find((s) => !!s.uri)?.uri;
+  let hint = '';
+  try {
+    if (firstUri && /\.ts(\?|$)/i.test(new URL(firstUri).pathname)) {
+      hint = ' (MPEG-TS .ts segments detected)';
+    }
+  } catch {
+    // URL parsing failed — not critical, leave hint empty.
   }
+
+  throw new Error(
+    `Unsupported HLS segment format${hint}: this engine requires fMP4 (CMAF) ` +
+    'segments with an #EXT-X-MAP init segment. For Mux streams, use Basic or ' +
+    'Premium video quality. See https://www.mux.com/docs/guides/use-video-quality-levels'
+  );
 };
 
 const addSegmentStartAndEndTimes = (segments: Segment[]) => {
