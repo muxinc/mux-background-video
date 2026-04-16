@@ -1,3 +1,12 @@
+## [0.2.1](https://github.com/muxinc/mux-background-video/compare/v0.2.0...v0.2.1) (2026-04-16)
+
+
+### Bug Fixes
+
+* add better error logging for Plus quality Mux videos ([#35](https://github.com/muxinc/mux-background-video/issues/35)) ([acb82a7](https://github.com/muxinc/mux-background-video/commit/acb82a789dddd8cedb3a0475a5c7097e7e82a900))
+
+
+
 # [0.2.0](https://github.com/muxinc/mux-background-video/compare/v0.1.0...v0.2.0) (2025-12-20)
 
 
