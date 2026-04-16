@@ -126,7 +126,19 @@ export const getMediaPlaylist = async <T extends Rendition>(
   const segments = addSegmentStartAndEndTimes(
     await getPlaylistFromURI(mediaPlaylistData.uri, MediaPlaylistReducerTuples, signal)
   );
+  assertFmp4Segments(segments);
   return { ...mediaPlaylistData, segments };
+};
+
+// Reject non-fMP4 playlists (e.g. MPEG-TS from Mux Plus) that would
+// silently fail at appendBuffer time. fMP4 always has an init segment.
+const assertFmp4Segments = (segments: Segment[]) => {
+  if (segments.length > 0 && !segments.some((s) => !s.duration && s.uri)) {
+    throw new Error(
+      'Unsupported segment format: fMP4 required. ' +
+      'https://www.mux.com/docs/guides/use-video-quality-levels'
+    );
+  }
 };
 
 const addSegmentStartAndEndTimes = (segments: Segment[]) => {

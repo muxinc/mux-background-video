@@ -24,7 +24,7 @@ npm install @mux/mux-background-video
 ## Usage
 
 > [!IMPORTANT]
-> Requires Mux [Basic](https://www.mux.com/docs/guides/use-video-quality-levels#basic) or [Premium](https://www.mux.com/docs/guides/use-video-quality-levels#premium) video quality currently because transmuxing of `.ts` segments is not supported.
+> Requires Mux [Basic](https://www.mux.com/docs/guides/use-video-quality-levels#basic) or [Premium](https://www.mux.com/docs/guides/use-video-quality-levels#premium) video quality. The [Plus](https://www.mux.com/docs/guides/use-video-quality-levels#plus) tier (and other classic HLS sources) is **not** supported because it serves MPEG-TS (`.ts`) segments, which this engine does not transmux.
 
 ### HTMLCustom Element
 
