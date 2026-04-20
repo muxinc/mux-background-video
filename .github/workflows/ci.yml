@@ -38,11 +38,10 @@ jobs:
           'iphone-15-pro',
           'iphone-14', 
           'iphone-12',
-          'ipad-air-13-2025',
-          'ipad-pro-12-9-2022',
+          'ipad-air-2020',
+          'ipad-pro-11-2022',
           'google-pixel-10-pro',
           'samsung-galaxy-s23',
-          'oneplus-9'
         ]
       max-parallel: 2
     steps:
@@ -52,12 +51,13 @@ jobs:
         node-version: '22'
         cache: 'npm'
     - run: npm ci
-    - uses: nick-fields/retry@v3
+    - name: Run tests on Sauce Labs (3 attempts)
+      uses: nick-fields/retry@v3
       env:
-        BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
-        BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
+        SAUCE_USERNAME: ${{ secrets.SAUCE_USERNAME }}
+        SAUCE_ACCESS_KEY: ${{ secrets.SAUCE_ACCESS_KEY }}
         TEST_DEVICE: ${{ matrix.device }}
       with:
         timeout_minutes: 10
         max_attempts: 3
-        command: TEST_DEVICE=${{ matrix.device }} npm run test:browserstack
+        command: TEST_DEVICE=${{ matrix.device }} npm run test:saucelabs
