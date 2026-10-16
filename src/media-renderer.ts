@@ -80,7 +80,10 @@ export function MediaRendererMixin<
         return;
       }
 
-      if (typeof MediaSource === 'undefined') {
+      if (
+        typeof MediaSource === 'undefined' &&
+        typeof ManagedMediaSource === 'undefined'
+      ) {
         this.display.src = this.src;
         return;
       }
